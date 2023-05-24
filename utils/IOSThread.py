@@ -1,3 +1,12 @@
+# -*- coding:utf-8 -*-
+
+"""
+@Author  :   StrokeH
+@env     :   Python 3.11.3
+@Time    :   2023/3/20 1:34 PM
+@Desc    :   Qt子进程页面，主要为IOS的功能携程
+"""
+
 from gui.mainWindow import *
 import os
 import time

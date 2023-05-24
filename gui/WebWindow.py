@@ -1,3 +1,12 @@
+# -*- coding:utf-8 -*-
+
+"""
+@Author  :   StrokeH
+@env     :   Python 3.11.3
+@Time    :   2023/3/20 1:34 PM
+@Desc    :   内置web功能界面，暂未开发，搁置
+"""
+
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *

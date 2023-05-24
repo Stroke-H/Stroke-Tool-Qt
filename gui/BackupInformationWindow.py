@@ -1,3 +1,12 @@
+# -*- coding:utf-8 -*-
+
+"""
+@Author  :   StrokeH
+@env     :   Python 3.11.3
+@Time    :   2023/3/20 1:34 PM
+@Desc    :   备份功能界面
+"""
+
 from gui.mainWindow import *
 from PyQt5.QtWidgets import QMessageBox
 

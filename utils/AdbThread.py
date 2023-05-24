@@ -1,3 +1,12 @@
+# -*- coding:utf-8 -*-
+
+"""
+@Author  :   StrokeH
+@env     :   Python 3.11.3
+@Time    :   2023/3/20 1:34 PM
+@Desc    :   Qt子进程页面，主要为Android的功能携程
+"""
+
 import time
 
 from PyQt5.QtCore import QThread, pyqtSignal
