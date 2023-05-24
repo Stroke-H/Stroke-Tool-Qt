@@ -91,7 +91,7 @@ class MainWindow(QMainWindow):
         file_menu.addAction(account_action)
 
         other_menu = self.menu_bar.addMenu('IOS Function')
-        ios_action = QAction('IOS Panel', self)
+        ios_action = QAction('IOS功能界面', self)
         ios_action.triggered.connect(self.ios_panel_btn_clicked)
         other_menu.addAction(ios_action)
 
@@ -111,8 +111,10 @@ class MainWindow(QMainWindow):
         self.package_name_entry.textChanged.connect(self.show_tooltip)
         # 刷新列表按钮
         self.refresh_btn = QPushButton('刷新列表', self)
+        self.refresh_btn.setToolTip('点击可以刷新左侧<b>包名下拉栏</b>')
         # 打开bug_list按钮
         self.bug_list_btn = QPushButton('打开bug清单', self)
+        self.bug_list_btn.setToolTip('点击可以打开左侧对应包名的<b>BugList链接</b>')
 
         self.hbox_1.addWidget(self.game_select_label)
         self.hbox_1.addWidget(self.game_select_combo_box)
@@ -131,14 +133,23 @@ class MainWindow(QMainWindow):
 
         # 第三个水平布局的按钮
         self.install_btn = QPushButton('APP安装', self)
+        self.install_btn.setToolTip('选取指定的<b>APK或aab</b>文件安装')
         self.uninstall_btn = QPushButton('APP卸载', self)
+        self.uninstall_btn.setToolTip('卸载<b>输入栏</b>中对应包名的手机APK')
         self.clear_cache_btn = QPushButton('清除缓存', self)
+        self.clear_cache_btn.setToolTip('清除<b>输入栏</b>中对应包名的APK缓存')
         self.install_referer_btn = QPushButton('AB转换', self)
+        self.install_referer_btn.setToolTip('install referer的A→B转换,使用时需要先在<b>输入栏</b>填入对应的包名')
         self.get_token_id_btn = QPushButton('RichOx ID', self)
+        self.get_token_id_btn.setToolTip('从日志中找到当前使用的<b>RIchoxID</b>')
         self.current_package_btn = QPushButton('当前包名', self)
+        self.current_package_btn.setToolTip('选择一个<b>APK</b>查看对应的包名,如果不选择则查看当前运行的程序包名')
         self.restart_btn = QPushButton('APP重启', self)
+        self.restart_btn.setToolTip('重启<b>输入栏</b>中对应包名的应用,如果没输入则重启当前运行的应用')
         self.open_language_btn = QPushButton('语言目录', self)
+        self.open_language_btn.setToolTip('直接打开手机的<b>语言设置页面</b>,当前适配手机:<b>pixel</b>')
         self.permission_check_btn = QPushButton('查看权限', self)
+        self.permission_check_btn.setToolTip('查看选中APK的<b>权限使用情况</b>')
         self.hbox_3.addWidget(self.install_btn)
         self.hbox_3.addWidget(self.uninstall_btn)
         self.hbox_3.addWidget(self.clear_cache_btn)
@@ -160,14 +171,23 @@ class MainWindow(QMainWindow):
 
         # 第五个水平布局的按钮
         self.screenshot_btn = QPushButton('手机截图', self)
+        self.screenshot_btn.setToolTip('截取手机当前的界面,截图保存在<b>电脑桌面</b>')
         self.clear_screenshot_btn = QPushButton('清除截图', self)
+        self.clear_screenshot_btn.setToolTip('清除<b>手机截图</b>功能截取的所有截图')
         self.show_ip_btn = QPushButton('展示当前IP', self)
+        self.show_ip_btn.setToolTip('在手机上展示当前的<b>ip地址</b>,仅挂载vpn有效')
         self.net_change_btn = QPushButton('网络切换', self)
+        self.net_change_btn.setToolTip('修改<b>手机WIFI</b>的状态,打开or关闭')
         self.sign_check_btn = QPushButton('签名检查', self)
+        self.sign_check_btn.setToolTip('获取选择的APK的<b>SHA1,SHA256,MD5</b>与最初版本的三个属性比对')
         self.adb_reboot_btn = QPushButton('ADB重启', self)
+        self.adb_reboot_btn.setToolTip('重启ADB的链接')
         self.interact_btn = QPushButton('交互面板', self)
+        self.interact_btn.setToolTip('打开交互面板,实现手机与电脑的<b>文本信息传输</b>')
         self.del_panel_btn = QPushButton('删号功能', self)
+        self.del_panel_btn.setToolTip('打开删号面板,实现对应项目的SQL傻瓜式<b>数据修改</b>处理')
         self.open_google_link_btn = QPushButton('google链接', self)
+        self.open_google_link_btn.setToolTip('打开<b>输入栏</b>中对应报名的google商店链接')
         self.hbox_5.addWidget(self.screenshot_btn)
         self.hbox_5.addWidget(self.clear_screenshot_btn)
         self.hbox_5.addWidget(self.show_ip_btn)
