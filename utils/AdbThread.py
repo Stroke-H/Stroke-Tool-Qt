@@ -11,7 +11,6 @@ import time
 
 from PyQt5.QtCore import QThread, pyqtSignal
 import subprocess
-from gui.dialog import *
 from gui.mainWindow import *
 import os
 import time
@@ -50,6 +49,7 @@ class AdbThread(QThread):
             path = cmd.split('jar ')[1].split('\\bundletool')[0]
             self.output.emit('正在转化aab->apk>>>>>>请稍等……')
             turn_apk = str(proc.stdout.readlines())
+            print(turn_apk)
             if 'The APKs will be signed with the debug keystore found at' in turn_apk:
                 self.output.emit('转包成功，正在安装转换完成的apk>>>>请稍等......')
                 key = fr'java -jar {path}\bundletool.jar install-apks --apks=b.apks'
@@ -57,17 +57,35 @@ class AdbThread(QThread):
                                                 stderr=subprocess.PIPE)
                 res = apks_install.stdout.readlines()
                 res_data = str(res)
+                print(res_data)
                 key1 = 'del b.apks'
                 self.output.emit('正在删除临时包:b.apks,安装即将完成,请稍等.....')
                 subprocess.Popen(key1, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE)
                 if 'Failed to commit install session' in res_data:
-                    print(1)
+                    self.output.emit('安装失败！！！设备内已有相同或更高版本的apk包、或装有相同签名的apk')
+                else:
+                    self.output.emit('安装结果：安装成功！')
+            elif '[]' in turn_apk:
+                self.output.emit('转包成功，正在安装转换完成的apk>>>>请稍等......')
+                time.sleep(15)
+                key = fr'java -jar {path}\bundletool.jar install-apks --apks=b.apks'
+                apks_install = subprocess.Popen(key, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                                stderr=subprocess.PIPE)
+                res = apks_install.stdout.readlines()
+                res_data = str(res)
+                print(res_data)
+                key1 = 'del b.apks'
+                self.output.emit('正在删除临时包:b.apks,安装即将完成,请稍等.....')
+                subprocess.Popen(key1, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE)
+                if 'Failed to commit install session' in res_data:
                     self.output.emit('安装失败！！！设备内已有相同或更高版本的apk包、或装有相同签名的apk')
                 else:
                     self.output.emit('安装结果：安装成功！')
             else:
                 self.output.emit(f'转包失败，失败原因：{turn_apk}')
+
         elif 'uninstall' in cmd:
             proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
@@ -153,6 +171,24 @@ class AdbThread(QThread):
             self.output.emit(f'80255600909')
             self.output.emit(f'---  Pagbank  ---')
             self.output.emit(f'allyssonnascimento04@gmail.com')
+        elif 'findstr mCurrentFocus' in cmd:
+            res = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            data = res.stdout.readline().decode('utf-8')
+            self.output.emit("当前正运行的APP应用PackageName和Activity如下:")
+            self.output.emit(data)
             # if proc.returncode != 0:
             #     error = proc.stderr.read().decode()
             #     self.output.emit(error)
+        elif 'adb shell pm list packages -3' in cmd:
+            res = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            data = res.stdout.readlines()
+            for pkg in data:
+                self.output.emit(pkg.decode('utf-8').strip())
+        elif 'adb shell pm list packages' == cmd:
+            res = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            data = res.stdout.readlines()
+            for pkg in data:
+                self.output.emit(pkg.decode('utf-8').strip())

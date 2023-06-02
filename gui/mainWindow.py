@@ -19,7 +19,7 @@ from gui.BackupInformationWindow import BackupInformationWindow
 from gui.IosWindow import IosWindow
 from utils.AdbThread import AdbThread
 import subprocess
-import pyperclip
+import platform
 import os
 import sys
 
@@ -81,13 +81,10 @@ class MainWindow(QMainWindow):
         # 菜单栏
         file_menu = self.menu_bar.addMenu('Options')
         backup_action = QAction('信息备份', self)
-        logcat_action = QAction('提现结果反馈', self)
         account_action = QAction('显示提现账号', self)
         backup_action.triggered.connect(self.backup_information_btn_clicked)
-        logcat_action.triggered.connect(self.withdraw_code_listen_clicked)
         account_action.triggered.connect(self.show_account_btn_clicked)
         file_menu.addAction(backup_action)
-        file_menu.addAction(logcat_action)
         file_menu.addAction(account_action)
 
         other_menu = self.menu_bar.addMenu('IOS Function')
@@ -95,6 +92,16 @@ class MainWindow(QMainWindow):
         ios_action.triggered.connect(self.ios_panel_btn_clicked)
         other_menu.addAction(ios_action)
 
+        adb_info_menu = self.menu_bar.addMenu('adb常用命令')
+        pkg_and_activity_action = QAction('当前pkg和activity', self)
+        all_pkg_action = QAction('显示所有包名', self)
+        third_pkg = QAction('显示第三方包名', self)
+        pkg_and_activity_action.triggered.connect(self.pkg_and_activity_btn_clicked)
+        all_pkg_action.triggered.connect(self.all_pkg_btn_clicked)
+        third_pkg.triggered.connect(self.third_pkg_btn_clicked)
+        adb_info_menu.addAction(pkg_and_activity_action)
+        adb_info_menu.addAction(all_pkg_action)
+        adb_info_menu.addAction(third_pkg)
         # 第一个水平布局的按钮
         # 选择游戏文本的label
         self.game_select_label = QLabel('选择游戏', self)
@@ -269,6 +276,7 @@ class MainWindow(QMainWindow):
 
     def con_status(self):
         res = AndroidFunc.subprocess_out('adb devices').readlines()
+
         result = res[1].decode('utf-8').strip()
         if result:
             try:
@@ -335,7 +343,11 @@ class MainWindow(QMainWindow):
                     system_path = my_path.replace('Desktop', '')
                     os.chdir(system_path)
                     self.status.showMessage('正在转化aab->apk,请稍等……', 3000)
-                    key = fr'java -jar {my_path}\bundletool.jar build-apks --connected-device --bundle="{path[0]}" --output=b.apks'
+                    model = platform.node()
+                    if model != 'DESKTOP-FHQH1MA':
+                        key = fr'java -jar {my_path}\bundletool.jar build-apks --connected-device --bundle="{path[0]}" --output=b.apks'
+                    else:
+                        key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --ks=C:\Users\dell\my-release-key.keystore --ks-pass=pass:102712 --ks-key-alias=hmh --key-pass=pass:102712'
                     self.thread_start(key)
                     os.chdir(work_path)
                 else:
@@ -371,27 +383,36 @@ class MainWindow(QMainWindow):
     def restart_btn_clicked(self):
         if self.con_status():
             package_name = self.package_name_entry.text()
-            game_id = ''
+            launcher_id = ''
             try:
                 my_db = AndroidFunc.sql_con(sql_name='data_sql')
                 cursor = my_db.cursor()
-                sql = f"""select app_id from android_game_info where package_name = '{package_name}'
+                sql = f"""select launcher_activity from android_game_info where package_name = '{package_name}'
                                 """
                 cursor.execute(sql)
-                game_id = cursor.fetchone()
+                launcher_id = cursor.fetchone()
                 cursor.close()
                 my_db.close()
             except BaseException as error:
                 logger.error(error)
-            if game_id:
-                self.status.showMessage(f'已为您重启id为{game_id[0]}的app……', 3000)
+            print(launcher_id[0])
+            if launcher_id[0]:
+                self.status.showMessage(f'正在为您重启LauncherActivity为{launcher_id[0]}的app……', 3000)
+                key = f"adb shell am force-stop {package_name}"
+                AndroidFunc.subprocess_out(key)
+                time.sleep(1)
+                key1 = f"adb shell am start -n {package_name}/{launcher_id[0]}"
+                res = AndroidFunc.subprocess_err(key1).readlines()
+                if "not exist" in str(res):
+                    self.notice.warn('当前的app未安装在本设备内呀，核对再尝试一次吧')
+            elif launcher_id[0] == '':
                 key = f"adb shell am force-stop {package_name}"
                 AndroidFunc.subprocess_out(key)
                 time.sleep(1)
                 key1 = f"adb shell am start -n {package_name}/.UnityMain"
                 res = AndroidFunc.subprocess_err(key1).readlines()
                 if "not exist" in str(res):
-                    self.notice.warn('当前的app未安装在本设备内呀，核对再尝试一次吧')
+                    self.notice.warn('当前的app未备份LauncherActivity，核对再尝试一次吧')
             else:
                 self.status.showMessage('您未设置id，正在你重启当前应用', 3000)
                 AndroidFunc.restart_current_app()
@@ -713,11 +734,6 @@ class MainWindow(QMainWindow):
             self.backup_info_window.exec_()
             self.open_window_list.remove('BackupInformationWindow')
 
-    def withdraw_code_listen_clicked(self):
-        key = 'withdraw'
-        self.thread_start(key)
-        self.notice.info('现在可以开始提现并留意log栏的信息啦~')
-
     def show_account_btn_clicked(self):
         key = 'account'
         self.thread_start(key)
@@ -735,6 +751,21 @@ class MainWindow(QMainWindow):
             self.ios_window = IosWindow(self)
             self.ios_window.exec_()
             self.open_window_list.remove('IosWindow')
+
+    def pkg_and_activity_btn_clicked(self):
+        key = 'adb shell dumpsys window | findstr mCurrentFocus'
+        self.thread_start(key)
+        self.notice.info("已经显示packageName和对应的activity啦~")
+
+    def third_pkg_btn_clicked(self):
+        key = 'adb shell pm list packages -3'
+        self.thread_start(key)
+        self.notice.info("已经显示所有第三方包名啦~")
+
+    def all_pkg_btn_clicked(self):
+        key = 'adb shell pm list packages'''
+        self.thread_start(key)
+        self.notice.info("已经显示所有包名啦~")
 
 
 if __name__ == "__main__":

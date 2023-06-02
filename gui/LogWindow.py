@@ -4,7 +4,7 @@
 @Author  :   StrokeH
 @env     :   Python 3.11.3
 @Time    :   2023/3/20 1:34 PM
-@Desc    :   内置web功能界面，暂未开发，搁置
+@Desc    :   logcat功能界面
 """
 
 import sys
@@ -16,7 +16,7 @@ from gui.mainWindow import *
 
 
 # noinspection PyAttributeOutsideInit
-class WebWindow(QDialog):
+class LogWindow(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -26,7 +26,9 @@ class WebWindow(QDialog):
         self.setGeometry(int(main_window_x) + 755, int(main_window_y) + 135, 400, 70)  # 设置窗口大小
         self.setWindowTitle("Web")
         self.setWindowOpacity(0.9)  # 设置窗口透明度
-        self.parent.open_window_list.append('WebWindow')
+        self.parent.open_window_list.append('LogWindow')
         self.notice = Notice()
         self.init_ui()
         self.onclick_listen()
+
+

@@ -36,6 +36,7 @@ class BackupInformationWindow(QDialog):
         self.hbox5 = QHBoxLayout()
         self.hbox6 = QHBoxLayout()
         self.hbox7 = QHBoxLayout()
+        self.hbox8 = QHBoxLayout()
         self.vbox = QVBoxLayout()
         self.vbox.addLayout(self.hbox1)
         self.vbox.addLayout(self.hbox2)
@@ -44,6 +45,7 @@ class BackupInformationWindow(QDialog):
         self.vbox.addLayout(self.hbox5)
         self.vbox.addLayout(self.hbox6)
         self.vbox.addLayout(self.hbox7)
+        self.vbox.addLayout(self.hbox8)
 
         # 第一个水平布局
         self.info_label = QLabel('项目代号：', self)
@@ -58,39 +60,48 @@ class BackupInformationWindow(QDialog):
         # 第二个水平布局
         self.package_label = QLabel('游戏包名：', self)
         self.package_entry = QLineEdit(self)
-        reg = QRegExp('[1A-z.]+$')
+        reg = QRegExp('[0-9A-z.]+$')
         validator = QRegExpValidator(self)  # 正则匹配规则
         validator.setRegExp(reg)
         self.package_entry.setValidator(validator)
         self.hbox2.addWidget(self.package_label)
         self.hbox2.addWidget(self.package_entry)
         # 第三个水平布局
+        self.activity_label = QLabel('Activity：', self)
+        self.activity_entry = QLineEdit(self)
+        reg = QRegExp('[0-9A-z.]+$')
+        validator = QRegExpValidator(self)  # 正则匹配规则
+        validator.setRegExp(reg)
+        self.activity_entry.setValidator(validator)
+        self.hbox3.addWidget(self.activity_label)
+        self.hbox3.addWidget(self.activity_entry)
+        # 第四个水平布局
         self.bug_label = QLabel('Bug 链接：', self)
         self.link_entry = QLineEdit(self)
-        self.hbox3.addWidget(self.bug_label)
-        self.hbox3.addWidget(self.link_entry)
-        # 第四个水平布局
+        self.hbox4.addWidget(self.bug_label)
+        self.hbox4.addWidget(self.link_entry)
+        # 第五个水平布局
         self.sha1_label = QLabel('项目SHA1：', self)
         self.sha1_entry = QLineEdit(self)
-        self.hbox4.addWidget(self.sha1_label)
-        self.hbox4.addWidget(self.sha1_entry)
-        # 第五个水平布局
+        self.hbox5.addWidget(self.sha1_label)
+        self.hbox5.addWidget(self.sha1_entry)
+        # 第六个水平布局
         self.sha256_label = QLabel('项目SHA256：', self)
         self.sha256_entry = QLineEdit(self)
-        self.hbox5.addWidget(self.sha256_label)
-        self.hbox5.addWidget(self.sha256_entry)
-        # 第六个水平布局
+        self.hbox6.addWidget(self.sha256_label)
+        self.hbox6.addWidget(self.sha256_entry)
+        # 第七个水平布局
         self.MD5_label = QLabel('项目 MD5：', self)
         self.MD5_entry = QLineEdit(self)
-        self.hbox6.addWidget(self.MD5_label)
-        self.hbox6.addWidget(self.MD5_entry)
-        # 第七个水平布局
+        self.hbox7.addWidget(self.MD5_label)
+        self.hbox7.addWidget(self.MD5_entry)
+        # 第八个水平布局
         self.select_btn = QPushButton('查询', self)
         self.create_btn = QPushButton('新增', self)
         self.update_btn = QPushButton('修改', self)
-        self.hbox7.addWidget(self.select_btn)
-        self.hbox7.addWidget(self.create_btn)
-        self.hbox7.addWidget(self.update_btn)
+        self.hbox8.addWidget(self.select_btn)
+        self.hbox8.addWidget(self.create_btn)
+        self.hbox8.addWidget(self.update_btn)
 
         self.setLayout(self.vbox)
 
@@ -123,6 +134,7 @@ class BackupInformationWindow(QDialog):
     def create_btn_clicked(self):
         app_id = self.id_entry.text()
         package_name = self.package_entry.text()
+        launcher_activity = self.activity_entry.text()
         bug_list = self.link_entry.text()
         sha1 = self.sha1_entry.text()
         sha256 = self.sha256_entry.text()
@@ -131,8 +143,8 @@ class BackupInformationWindow(QDialog):
             try:
                 my_db = AndroidFunc.sql_con(sql_name='data_sql')
                 cursor = my_db.cursor()
-                sql = f"""INSERT INTO android_game_info(app_id,package_name,bugList_link,sha1,md5,sha256) 
-                                VALUE ('{app_id}','{package_name}','{bug_list}','{sha1}','{md5}','{sha256}')"""
+                sql = f"""INSERT INTO android_game_info(app_id,package_name,launcher_activity,bugList_link,sha1,md5,sha256) 
+                                VALUE ('{app_id}','{package_name}',{launcher_activity},'{bug_list}','{sha1}','{md5}','{sha256}')"""
                 cursor.execute(sql)
                 my_db.commit()
                 cursor.close()
@@ -152,6 +164,7 @@ class BackupInformationWindow(QDialog):
     def update_btn_clicked(self):
         app_id = self.id_entry.text()
         package_name = self.package_entry.text()
+        launcher_activity = self.activity_entry.text()
         bug_list = self.link_entry.text()
         sha1 = self.sha1_entry.text()
         sha256 = self.sha256_entry.text()
@@ -166,6 +179,10 @@ class BackupInformationWindow(QDialog):
             if data:
                 if package_name:
                     sql = f"""UPDATE android_game_info SET package_name='{package_name}' WHERE app_id='{app_id}'"""
+                    cursor.execute(sql)
+                    my_db.commit()
+                if launcher_activity:
+                    sql = f"""UPDATE android_game_info SET launcher_activity='{launcher_activity}' WHERE app_id='{app_id}'"""
                     cursor.execute(sql)
                     my_db.commit()
                 if bug_list:
@@ -187,11 +204,11 @@ class BackupInformationWindow(QDialog):
                 self.msg_box.setIcon(QMessageBox.Information)
                 self.msg_box.setWindowTitle("修改结果")
                 self.msg_box.setText(f'''
-                        packageName 已经修改为{package_name}
-                        bugList_link 已经修改为{bug_list}
-                        SHA1 已经修改为{sha1}
-                        SHA256 已经修改为{sha256}
-                        MD5 已经修改为{md5}
+                        packageName→{package_name}
+                        bugList_link→{bug_list}
+                        SHA1→{sha1}
+                        SHA256→{sha256}
+                        MD5→{md5}
                         ''')
                 self.msg_box.exec_()
             else:
