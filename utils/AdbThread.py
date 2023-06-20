@@ -28,7 +28,7 @@ class AdbThread(QThread):
 
     def run(self):
         cmd = self.cmd
-        if 'adb install' in cmd:
+        if ' install' in cmd:
             proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
             self.output.emit('APK开始安装>>>>>请稍等......')
@@ -44,15 +44,19 @@ class AdbThread(QThread):
                 error = proc.stderr.read().decode()
                 self.output.emit(error)
         elif 'bundletool.jar' in cmd:
+            data = cmd.split('*-*')
+            cmd = data[0]
+            devices = data[1]
             proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
             path = cmd.split('jar ')[1].split('\\bundletool')[0]
             self.output.emit('正在转化aab->apk>>>>>>请稍等……')
             turn_apk = str(proc.stdout.readlines())
+            err_report = proc.stderr.readlines()
             print(turn_apk)
             if 'The APKs will be signed with the debug keystore found at' in turn_apk:
                 self.output.emit('转包成功，正在安装转换完成的apk>>>>请稍等......')
-                key = fr'java -jar {path}\bundletool.jar install-apks --apks=b.apks'
+                key = fr'java -jar {path}\bundletool.jar install-apks --apks=b.apks --device-id={devices}'
                 apks_install = subprocess.Popen(key, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                                 stderr=subprocess.PIPE)
                 res = apks_install.stdout.readlines()
@@ -66,10 +70,10 @@ class AdbThread(QThread):
                     self.output.emit('安装失败！！！设备内已有相同或更高版本的apk包、或装有相同签名的apk')
                 else:
                     self.output.emit('安装结果：安装成功！')
-            elif '[]' in turn_apk:
+            elif '[]' in str(err_report):
                 self.output.emit('转包成功，正在安装转换完成的apk>>>>请稍等......')
-                time.sleep(15)
-                key = fr'java -jar {path}\bundletool.jar install-apks --apks=b.apks'
+                # time.sleep(15)
+                key = fr'java -jar {path}\bundletool.jar install-apks --apks=b.apks --device-id={devices}'
                 apks_install = subprocess.Popen(key, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                                 stderr=subprocess.PIPE)
                 res = apks_install.stdout.readlines()
@@ -83,8 +87,11 @@ class AdbThread(QThread):
                     self.output.emit('安装失败！！！设备内已有相同或更高版本的apk包、或装有相同签名的apk')
                 else:
                     self.output.emit('安装结果：安装成功！')
+            elif 'Error:' in str(err_report):
+                for i in err_report:
+                    self.output.emit(f"<code><big>{i.decode('utf-8').strip()}</big></code>")
             else:
-                self.output.emit(f'转包失败，失败原因：{turn_apk}')
+                self.output.emit('发生未知错误')
 
         elif 'uninstall' in cmd:
             proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -96,8 +103,11 @@ class AdbThread(QThread):
             else:
                 self.output.emit('当前应用未安装在本设备中，请确认包名……')
         elif 'pull /sdcard/screenshot.png' in cmd:
+            data = cmd.split('*-*')
+            cmd = data[0]
+            devices = data[1]
             pic_name = cmd.split('/')[-1]
-            cmd_shot = 'adb shell /system/bin/screencap -p /sdcard/screenshot.png'
+            cmd_shot = f'adb -s {devices} shell /system/bin/screencap -p /sdcard/screenshot.png'
             res = subprocess.Popen(cmd_shot, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
             print(f"out >>>>>{res.stdout.readlines()}")
@@ -108,7 +118,7 @@ class AdbThread(QThread):
             print(f"out >>>>>{res_data}")
             print(f'err >>>>>{proc.stderr.readlines()}')
             if "0 skipped" in res_data:
-                self.output.emit(f'截图成功，文件已保存桌面为>>>>>>{pic_name}')
+                self.output.emit(f'<b>[{devices}]</b>截图成功，文件已保存桌面为>>>>>>{pic_name}')
             else:
                 self.output.emit('截图失败T_T~~')
         elif 'https://webeye.feishu' in cmd:
@@ -142,10 +152,12 @@ class AdbThread(QThread):
                     clear_key = 'adb logcat -c'
                     res = subprocess.Popen(clear_key, shell=True, stdin=subprocess.PIPE,
                                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        elif 'adb logcat -v threadtime' in cmd:
+        elif 'logcat -v threadtime' in cmd:
+
             keyword_reg = 'uid_fission='
             res = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            devices = cmd.split(' ')[2]
             while res.poll() is None:
                 line = res.stdout.readline().decode().strip()
                 self.log_count += 1
@@ -153,13 +165,13 @@ class AdbThread(QThread):
                     data_res = line.split('uid_fission=')[1][0:16]
                     self.output.emit(f'{line}\n当前的uid={data_res}')
                     self.log_count = 0
-                    clear_key = 'adb logcat -c'
+                    clear_key = f'adb -s {devices} logcat -c'
                     res = subprocess.Popen(clear_key, shell=True, stdin=subprocess.PIPE,
                                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 elif self.log_count > 5000:
                     self.output.emit('暂未找到对应的Uid，请确认是否log中打印了id')
                     self.log_count = 0
-                    clear_key = 'adb logcat -c'
+                    clear_key = f'adb -s {devices} logcat -c'
                     res = subprocess.Popen(clear_key, shell=True, stdin=subprocess.PIPE,
                                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         elif 'account' in cmd:

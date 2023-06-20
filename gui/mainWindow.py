@@ -42,6 +42,7 @@ class MainWindow(QMainWindow):
         self.log_count = 0
         self.img_id = 1
         self.is_open = 1
+        self.devices_index = ''
         self.net_status = 'disable'
         self.status = self.statusBar()
         self.menu_bar = self.menuBar()
@@ -102,13 +103,23 @@ class MainWindow(QMainWindow):
         adb_info_menu.addAction(pkg_and_activity_action)
         adb_info_menu.addAction(all_pkg_action)
         adb_info_menu.addAction(third_pkg)
+
+        # android_com_func_menu = self.menu_bar.addMenu('Android常用功能')
+        # show_date_panel = QAction('打开时间界面', self)
+        # show_language_panel = QAction('打开语言界面', self)
+        # show_date_panel.triggered.connect(self)
+
         # 第一个水平布局的按钮
         # 选择游戏文本的label
-        self.game_select_label = QLabel('选择游戏', self)
+        # self.game_select_label = QLabel('选择游戏', self)
+        self.devices_select_combo_box = QComboBox(self)
+        self.devices_select_combo_box.addItems(AndroidFunc.get_devices_list())
+        self.devices_select_combo_box.setFixedSize(100, 20)
         # 游戏目录的下拉框
         self.game_select_combo_box = QComboBox(self)
         self.game_select_combo_box.addItems(AndroidFunc.get_id_and_package_name_list())
         self.game_select_combo_box.setFixedSize(200, 20)
+        self.devices_index = self.get_index_value(self.devices_select_combo_box)
         # 文本输入框
         self.package_name_entry = QLineEdit(self)
         reg = QRegExp('[0-9a-zA-Z.]+$')
@@ -118,12 +129,12 @@ class MainWindow(QMainWindow):
         self.package_name_entry.textChanged.connect(self.show_tooltip)
         # 刷新列表按钮
         self.refresh_btn = QPushButton('刷新列表', self)
-        self.refresh_btn.setToolTip('点击可以刷新左侧<b>包名下拉栏</b>')
+        self.refresh_btn.setToolTip('点击可以刷新左侧<b>包名及设备下拉栏</b>')
         # 打开bug_list按钮
         self.bug_list_btn = QPushButton('打开bug清单', self)
         self.bug_list_btn.setToolTip('点击可以打开左侧对应包名的<b>BugList链接</b>')
 
-        self.hbox_1.addWidget(self.game_select_label)
+        self.hbox_1.addWidget(self.devices_select_combo_box)
         self.hbox_1.addWidget(self.game_select_combo_box)
         self.hbox_1.addWidget(self.package_name_entry)
         self.hbox_1.addWidget(self.refresh_btn)
@@ -246,7 +257,8 @@ class MainWindow(QMainWindow):
     def onclick_listen(self):
         self.refresh_btn.clicked.connect(self.refresh_btn_clicked)
         self.bug_list_btn.clicked.connect(self.bug_list_btn_clicked)
-        self.game_select_combo_box.currentIndexChanged.connect(self.index_change)
+        self.devices_select_combo_box.currentIndexChanged.connect(self.devices_index_change)
+        self.game_select_combo_box.currentIndexChanged.connect(self.game_index_change)
         self.install_btn.clicked.connect(self.install_btn_clicked)
         self.uninstall_btn.clicked.connect(self.uninstall_btn_clicked)
         self.current_package_btn.clicked.connect(self.current_package_btn_clicked)
@@ -259,28 +271,38 @@ class MainWindow(QMainWindow):
         self.net_change_btn.clicked.connect(self.net_change_btn_clicked)
         self.sign_check_btn.clicked.connect(self.sign_check_btn_clicked)
         self.clear_screenshot_btn.clicked.connect(self.clear_screenshot_btn_clicked)
-        self.adb_reboot_btn.clicked.connect(AndroidFunc.restart_adb)
+        self.adb_reboot_btn.clicked.connect(self.restart_adb)
         self.interact_btn.clicked.connect(self.interact_btn_clicked)
         self.del_panel_btn.clicked.connect(self.del_panel_btn_clicked)
         self.open_google_link_btn.clicked.connect(self.open_google_link_btn_clicked)
         self.permission_check_btn.clicked.connect(self.permission_check_btn_clicked)
         self.open_language_btn.clicked.connect(self.open_language_btn_clicked)
 
-    def index_change(self):
-        index = self.game_select_combo_box.currentIndex()
-        self.default_id = self.game_select_combo_box.itemText(index)
+    def game_index_change(self):
+        self.default_id = self.get_index_value(self.game_select_combo_box)
         self.package_name_entry.setText(f"{self.default_id.split('-')[1]}")
         self.status.showMessage(f'当前选择游戏为{self.default_id}……', 3000)
         self.default_name = self.default_id.split('-')[1]
         return self.default_id.split('-')[0]
 
-    def con_status(self):
-        res = AndroidFunc.subprocess_out('adb devices').readlines()
+    def devices_index_change(self):
+        self.devices_index = self.get_index_value(self.devices_select_combo_box)
+        return self.devices_index
 
-        result = res[1].decode('utf-8').strip()
-        if result:
+    @staticmethod
+    def get_index_value(combo_box):
+        index = combo_box.currentIndex()
+        value = combo_box.itemText(index)
+        return value
+
+    def restart_adb(self):
+        AndroidFunc.restart_adb(self.devices_index)
+        self.logTextEdit.append(f'<b>[{self.devices_index}]</b>adb已重启')
+
+    def con_status(self):
+        if self.devices_index:
             try:
-                ad_name, ad_version, screen_size = AndroidFunc.get_info()
+                ad_name, ad_version, screen_size = AndroidFunc.get_info(self.devices_index)
                 self.model_label.setText(f'设备名称：{ad_name.strip()}')
                 self.version_label.setText(f'安卓版本：{ad_version.strip()}')
                 self.size_label.setText(f'分辨率：{screen_size.split(":")[1].strip()}')
@@ -300,12 +322,13 @@ class MainWindow(QMainWindow):
     def on_output_received(self, output):
         self.logTextEdit.append(output)
 
-    @staticmethod
-    def open_language_btn_clicked():
-        key = 'adb shell am start -a android.settings.LOCALE_SETTINGS'
+    def open_language_btn_clicked(self):
+        key = f'adb -s {self.devices_index} shell am start -a android.settings.LOCALE_SETTINGS'
         AndroidFunc.subprocess_single(key)
+        self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备的语言界面已打开')
 
     def install_btn_clicked(self):
+        print(self.con_status())
         if self.con_status():
             path = AndroidFunc.get_file_path()
             if path[0]:
@@ -321,35 +344,42 @@ class MainWindow(QMainWindow):
                         cursor.close()
                         my_db.close()
                         self.package_name_entry.setText(game_id)
-                        self.status.showMessage('游戏正在安装中,请稍等……', 3000)
+                        self.status.showMessage(f'<b>[{self.devices_index}]</b>正在安装中,请稍等……', 3000)
+                        self.logTextEdit.append(f'<b>[{self.devices_index}]</b>将执行安装操作！')
                     except BaseException as err:
                         self.notice.warn('您当前安装的应用非本公司项目或命名不规范，正在为您安装，请稍等')
+                        self.logTextEdit.append(f'<b>[{self.devices_index}]</b>将执行安装操作！')
                     time.sleep(1)
-                    key = f'adb install "{path[0]}"'
+                    key = f'adb -s {self.devices_index} install "{path[0]}"'
                     self.thread_start(key)
                 elif 'aab' in path[0]:
                     game_code = path[0].split('/')[-1].split('_')[0]
-                    my_db = AndroidFunc.sql_con(sql_name='data_sql')
-                    cursor = my_db.cursor()
-                    sql = f"""select package_name from android_game_info where app_id = '{game_code}'
-                                                                                                """
-                    cursor.execute(sql)
-                    game_id = cursor.fetchone()[0]
-                    cursor.close()
-                    my_db.close()
-                    self.package_name_entry.setText(game_id)
-                    work_path = os.getcwd()
-                    my_path = str(AndroidFunc.get_desktop())
-                    system_path = my_path.replace('Desktop', '')
-                    os.chdir(system_path)
-                    self.status.showMessage('正在转化aab->apk,请稍等……', 3000)
-                    model = platform.node()
-                    if model != 'DESKTOP-FHQH1MA':
-                        key = fr'java -jar {my_path}\bundletool.jar build-apks --connected-device --bundle="{path[0]}" --output=b.apks'
-                    else:
-                        key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --ks=C:\Users\dell\my-release-key.keystore --ks-pass=pass:102712 --ks-key-alias=hmh --key-pass=pass:102712'
-                    self.thread_start(key)
-                    os.chdir(work_path)
+                    try:
+                        my_db = AndroidFunc.sql_con(sql_name='data_sql')
+                        cursor = my_db.cursor()
+                        sql = f"""select package_name from android_game_info where app_id = '{game_code}'
+                                                                                                    """
+                        cursor.execute(sql)
+                        game_id = cursor.fetchone()[0]
+                        cursor.close()
+                        my_db.close()
+                        self.package_name_entry.setText(game_id)
+                    except BaseException as error:
+                        self.logTextEdit.append(str(error))
+                        self.notice.info('当前安装的应用名不符合标准规范~')
+                    finally:
+                        work_path = os.getcwd()
+                        my_path = str(AndroidFunc.get_desktop())
+                        system_path = my_path.replace('Desktop', '')
+                        os.chdir(system_path)
+                        self.status.showMessage(f'<b>[{self.devices_index}]</b>正在转化aab->apk,请稍等……', 3000)
+                        model = platform.node()
+                        if model != 'DESKTOP-FHQH1MA':
+                            key = fr'java -jar {my_path}\bundletool.jar build-apks --connected-device --bundle="{path[0]}" --output=b.apks*-*{self.devices_index}'
+                        else:
+                            key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --ks=C:\Users\dell\my-release-key.keystore --ks-pass=pass:102712 --ks-key-alias=hmh --key-pass=pass:102712*-*{self.devices_index}'
+                        self.thread_start(key)
+                        os.chdir(work_path)
                 else:
                     self.notice.warn("您选择的文件不是aab或apk哦~")
             else:
@@ -361,7 +391,8 @@ class MainWindow(QMainWindow):
         if self.con_status():
             game_id = self.package_name_entry.text()
             if game_id:
-                key = f"adb uninstall {game_id}"
+                key = f"adb -s {self.devices_index} uninstall {game_id}"
+                self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备将执行卸载操作！')
                 self.thread_start(key)
             else:
                 self.notice.warn('您还没有选择包名呀~')
@@ -375,8 +406,8 @@ class MainWindow(QMainWindow):
                 key = fr'aapt dump badging "{path}"'
                 self.thread_start(key)
             else:
-                package_name = AndroidFunc.get_current_package_name()
-                self.logTextEdit.append(f'当前apk的包名为：{package_name}')
+                package_name = AndroidFunc.get_current_package_name(self.devices_index)
+                self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备当前apk的包名为：{package_name}')
         else:
             self.notice.error('adb未链接，请检查设备T_T~')
 
@@ -395,37 +426,38 @@ class MainWindow(QMainWindow):
                 my_db.close()
             except BaseException as error:
                 logger.error(error)
-            print(launcher_id[0])
             if launcher_id[0]:
                 self.status.showMessage(f'正在为您重启LauncherActivity为{launcher_id[0]}的app……', 3000)
-                key = f"adb shell am force-stop {package_name}"
+                key = f"adb -s {self.devices_index} shell am force-stop {package_name}"
                 AndroidFunc.subprocess_out(key)
                 time.sleep(1)
-                key1 = f"adb shell am start -n {package_name}/{launcher_id[0]}"
+                key1 = f"adb -s {self.devices_index} shell am start -n {package_name}/{launcher_id[0]}"
                 res = AndroidFunc.subprocess_err(key1).readlines()
                 if "not exist" in str(res):
                     self.notice.warn('当前的app未安装在本设备内呀，核对再尝试一次吧')
             elif launcher_id[0] == '':
-                key = f"adb shell am force-stop {package_name}"
+                key = f"adb -s {self.devices_index} shell am force-stop {package_name}"
                 AndroidFunc.subprocess_out(key)
                 time.sleep(1)
-                key1 = f"adb shell am start -n {package_name}/.UnityMain"
+                key1 = f"adb -s {self.devices_index} shell am start -n {package_name}/.UnityMain"
                 res = AndroidFunc.subprocess_err(key1).readlines()
                 if "not exist" in str(res):
                     self.notice.warn('当前的app未备份LauncherActivity，核对再尝试一次吧')
             else:
                 self.status.showMessage('您未设置id，正在你重启当前应用', 3000)
-                AndroidFunc.restart_current_app()
+                AndroidFunc.restart_current_app(self.devices_index)
         else:
             self.notice.error('adb未链接，请检查设备T_T~')
 
     def clear_cache_btn_clicked(self):
         if self.con_status():
             package_name = self.package_name_entry.text()
-            rec_data = AndroidFunc.clear_cache(package_name=package_name)
+            rec_data = AndroidFunc.clear_cache(package_name, self.devices_index)
+            self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备将执行清除缓存操作！')
             match rec_data:
                 case 'success':
                     self.notice.success('已经清除了指定的应用缓存啦^0^~~')
+                    self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备缓存清除成功')
                 case 'failed':
                     self.notice.warn('指定的应用没有安装在本设备中，清确认后重试-,-~~')
                 case 'no running app':
@@ -453,31 +485,31 @@ class MainWindow(QMainWindow):
             temp = self.package_name_entry.text()
             apk_path = AndroidFunc.get_file_path()[0]
             if temp and apk_path:
-                uninstall_key = f'adb uninstall {temp}'
+                uninstall_key = f'adb -s {self.devices_index} uninstall {temp}'
                 AndroidFunc.subprocess_single(uninstall_key)
                 self.logTextEdit.append('正在进行商店跳转，请稍等>>>>>>>>')
-                stop_key = 'adb shell am force-stop com.android.vending'
+                stop_key = f'adb -s {self.devices_index} shell am force-stop com.android.vending'
                 AndroidFunc.subprocess_single(stop_key)
                 time.sleep(1)
                 if '.apk' in apk_path:
                     match temp:
                         case 'A837':
-                            link_key = 'adb shell am start -a android.intent.action.VIEW -d "https://play.google.com/store/apps/details?id=com.eliminar.palavras.game&referrer=utm_source%3Dgoogle%26utm_medium%3Dcpc%26anid%3Dadmob" >nul'
+                            link_key = f'adb -s {self.devices_index} shell am start -a android.intent.action.VIEW -d "https://play.google.com/store/apps/details?id=com.eliminar.palavras.game&referrer=utm_source%3Dgoogle%26utm_medium%3Dcpc%26anid%3Dadmob" >nul'
                         case _:
-                            link_key = f'adb shell am start -a android.intent.action.VIEW -d "https://play.google.com/store/apps/' \
+                            link_key = f'adb -s {self.devices_index} shell am start -a android.intent.action.VIEW -d "https://play.google.com/store/apps/' \
                                        f'details?id={temp}&referrer=utm_source%3Dgoogle%26utm_medium%3Dcpc%26utm_term%3Drunning' \
                                        f'%252Bshoes%26utm_content%3Dlogolink%26utm_campaign%3Dspring_sale"'
                     AndroidFunc.subprocess_single(link_key)
                     print(link_key)
                     time.sleep(10)
                     self.logTextEdit.append('正在进行apk安装并切换organic>>>>>>>')
-                    install_key = f'adb install {apk_path}'
+                    install_key = f'adb -s {self.devices_index} install {apk_path}'
                     AndroidFunc.subprocess_single(install_key)
                     time.sleep(2)
                     self.logTextEdit.append('安装完成，请打开游戏查看切换状况')
                 elif '.aab' in apk_path:
                     self.logTextEdit.append('正在进行aab安装并切换organic>>>>>>>')
-                    link_key = f'adb shell am start -a android.intent.action.VIEW -d "https://play.google.com/store/apps/' \
+                    link_key = f'adb -s {self.devices_index} shell am start -a android.intent.action.VIEW -d "https://play.google.com/store/apps/' \
                                f'details?id={temp}&referrer=utm_source%3Dgoogle%26utm_medium%3Dcpc%26utm_term%3Drunning' \
                                f'%252Bshoes%26utm_content%3Dlogolink%26utm_campaign%3Dspring_sale"'
                     AndroidFunc.subprocess_single(link_key)
@@ -490,7 +522,7 @@ class MainWindow(QMainWindow):
                     turn_apk = AndroidFunc.subprocess_multiple(key)
                     res = str(turn_apk)
                     if 'The APKs will be signed with the debug keystore found at' in res:
-                        key = fr'java -jar {my_path}\bundletool.jar install-apks --apks=b.apks'
+                        key = fr'java -jar {my_path}\bundletool.jar install-apks --apks=b.apks --device-id={self.devices_index}'
                         apk_install = AndroidFunc.subprocess_multiple(key)
                         res_out = str(apk_install)
                         # res_err = str(apk_install.stderr.readlines())
@@ -518,11 +550,11 @@ class MainWindow(QMainWindow):
         if self.con_status():
             temp = self.package_name_entry.text()
             if temp:
-                self.status.showMessage('正在从日志中获取Uid,请稍等>>>>', 3000)
+                self.status.showMessage(f'<b>[{self.devices_index}]</b>正在从日志中获取Uid,请稍等>>>>', 3000)
                 self.restart_btn_clicked()
-                clear_key = 'adb logcat -c'
+                clear_key = f'adb -s {self.devices_index} logcat -c'
                 AndroidFunc.subprocess_out(clear_key)
-                command = "adb logcat -v threadtime"
+                command = f"adb -s {self.devices_index} logcat -v threadtime"
                 self.thread_start(command)
             else:
                 self.notice.warn('您未选择对应应用，请选择后重试=,=')
@@ -533,7 +565,12 @@ class MainWindow(QMainWindow):
         self.game_select_combo_box.disconnect()
         self.game_select_combo_box.clear()
         self.game_select_combo_box.addItems(AndroidFunc.get_id_and_package_name_list())
-        self.game_select_combo_box.currentIndexChanged.connect(self.index_change)
+        self.game_select_combo_box.currentIndexChanged.connect(self.game_index_change)
+        self.devices_select_combo_box.disconnect()
+        self.devices_select_combo_box.clear()
+        self.devices_select_combo_box.addItems(AndroidFunc.get_devices_list())
+        self.devices_select_combo_box.currentIndexChanged.connect(self.devices_index_change)
+        self.devices_index = self.get_index_value(self.devices_select_combo_box)
 
     def bug_list_btn_clicked(self):
         if self.con_status():
@@ -563,16 +600,18 @@ class MainWindow(QMainWindow):
 
     def screenshot_btn_clicked(self):
         if self.con_status():
-            cmd_pull = f'adb pull /sdcard/screenshot.png {AndroidFunc.get_desktop()}/ScImg{self.img_id}.png'
+            cmd_pull = f'adb -s {self.devices_index} pull /sdcard/screenshot.png {AndroidFunc.get_desktop()}/ScImg{self.img_id}.png*-*{self.devices_index}'
             self.thread_start(cmd_pull)
             self.img_id += 1
+            self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备将执行屏幕截图操作！')
         else:
             self.notice.error('adb未链接，请检查设备T_T~')
 
     def show_ip_btn_clicked(self):
         if self.con_status():
-            key = 'adb shell am start -a android.intent.action.VIEW -d "https://www.ipaddress.my/?lang=zh_CN"'
+            key = f'adb -s {self.devices_index} shell am start -a android.intent.action.VIEW -d "https://www.ipaddress.my/?lang=zh_CN"'
             AndroidFunc.subprocess_out(key)
+            self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备将打开ip页面')
             self.notice.success(
                 "IP已在手机上打开对应网页，请确认结果PS:本功能依赖Google功能，适用使用梯子的场景，需要翻墙若国内网未正常显示为正常现象,链接vpn即可")
         else:
@@ -580,14 +619,17 @@ class MainWindow(QMainWindow):
 
     def net_change_btn_clicked(self):
         if self.con_status():
-            key = f'adb shell svc wifi {self.net_status}'
+            key = f'adb -s {self.devices_index} shell svc wifi {self.net_status}'
             AndroidFunc.subprocess_out(key)
+            self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备将更改WiFi的链接状态')
             match self.net_status:
                 case 'disable':
+                    self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备的WiFi已经关闭')
                     self.notice.success('当前已关闭网络')
                     self.status.showMessage("当前网络状态：关闭", 5000)
                     self.net_status = 'enable'
                 case 'enable':
+                    self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备的WiFi已经打开')
                     self.notice.success('网络已经重新打开')
                     self.status.showMessage("当前网络状态：打开", 5000)
                     self.net_status = 'disable'
@@ -682,10 +724,12 @@ class MainWindow(QMainWindow):
     def open_google_link_btn_clicked(self):
         AndroidFunc.adb_status()
         my_data = self.package_name_entry.text()
+        devices = self.get_index_value(self.devices_select_combo_box)
         if my_data:
-            key = f'adb shell am start -a android.intent.action.VIEW -d "https://play.google.com/store/apps/details?id={my_data}"'
+            key = f'adb -s {devices} shell am start -a android.intent.action.VIEW -d "https://play.google.com/store/apps/details?id={my_data}"'
             AndroidFunc.subprocess_single(key)
             self.notice.success('已在手机上打开当前包名关联的google链接')
+            self.logTextEdit.append(f'<b>[{devices}]</b>设备已经开打了指定的商店链接')
         else:
             self.notice.error('当前包名关联游戏未在数据库备份')
 
@@ -753,17 +797,17 @@ class MainWindow(QMainWindow):
             self.open_window_list.remove('IosWindow')
 
     def pkg_and_activity_btn_clicked(self):
-        key = 'adb shell dumpsys window | findstr mCurrentFocus'
+        key = f'adb -s {self.devices_index} shell dumpsys window | findstr mCurrentFocus'
         self.thread_start(key)
         self.notice.info("已经显示packageName和对应的activity啦~")
 
     def third_pkg_btn_clicked(self):
-        key = 'adb shell pm list packages -3'
+        key = f'adb -s {self.devices_index} shell pm list packages -3'
         self.thread_start(key)
         self.notice.info("已经显示所有第三方包名啦~")
 
     def all_pkg_btn_clicked(self):
-        key = 'adb shell pm list packages'''
+        key = f'adb -s {self.devices_index} shell pm list packages'''
         self.thread_start(key)
         self.notice.info("已经显示所有包名啦~")
 

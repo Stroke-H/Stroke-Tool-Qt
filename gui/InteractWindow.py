@@ -67,40 +67,41 @@ class InteractWindow(QDialog):
 
     # 手机上打开链接
     def open_link_btn_clicked(self):
+        devices = self.parent.devices_index
         my_link = self.data_entry.text()
-        key = f'adb shell am start -a android.intent.action.VIEW -d "{my_link}"'
+        key = f'adb -s {devices} shell am start -a android.intent.action.VIEW -d "{my_link}"'
         AndroidFunc.subprocess_single(key)
 
     # 向手机剪切板发送信息
     def send_data_btn_clicked(self):
-        key = f"adb shell am start -n ca.zgrs.clipper/ca.zgrs.clipper.Main"
+        devices = self.parent.devices_index
+        key = f"adb -s {devices} shell am start -n ca.zgrs.clipper/ca.zgrs.clipper.Main"
         AndroidFunc.subprocess_single(key)
         time.sleep(1)
         send_data = str(self.data_entry.text()).replace('&', '%26')
-        print(send_data)
-        key1 = f'adb shell am broadcast -a clipper.set -e text "{send_data}"'
+        key1 = f'adb -s {devices} shell am broadcast -a clipper.set -e text "{send_data}"'
         AndroidFunc.subprocess_single(key1)
         time.sleep(1)
-        key2 = 'adb shell am force-stop ca.zgrs.clipper'
+        key2 = f'adb -s {devices} shell am force-stop ca.zgrs.clipper'
         AndroidFunc.subprocess_single(key2)
 
     # 获取手机剪切板信息
     def get_data_btn_clicked(self):
-        key = f"adb shell am start -n ca.zgrs.clipper/ca.zgrs.clipper.Main"
+        devices = self.parent.devices_index
+        key = f"adb -s {devices} shell am start -n ca.zgrs.clipper/ca.zgrs.clipper.Main"
         AndroidFunc.subprocess_single(key)
         time.sleep(1)
-        key1 = 'adb shell am broadcast -a clipper.get'
+        key1 = f'adb -s {devices} shell am broadcast -a clipper.get'
         res = AndroidFunc.subprocess_multiple(key1)
         time.sleep(1)
         data_res = res[1].decode('utf-8')
-        print(data_res)
         if len(data_res) > 1:
             my_data = data_res.split('data=')[1]
             self.data_entry.setText(my_data)
         else:
             self.notice.error('您的手机剪切板没有内容')
         time.sleep(1)
-        key2 = 'adb shell am force-stop ca.zgrs.clipper'
+        key2 = f'adb -s {devices} shell am force-stop ca.zgrs.clipper'
         AndroidFunc.subprocess_single(key2)
 
 

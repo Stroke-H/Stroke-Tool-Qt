@@ -144,7 +144,7 @@ class BackupInformationWindow(QDialog):
                 my_db = AndroidFunc.sql_con(sql_name='data_sql')
                 cursor = my_db.cursor()
                 sql = f"""INSERT INTO android_game_info(app_id,package_name,launcher_activity,bugList_link,sha1,md5,sha256) 
-                                VALUE ('{app_id}','{package_name}',{launcher_activity},'{bug_list}','{sha1}','{md5}','{sha256}')"""
+                                VALUE ('{app_id}','{package_name}','{launcher_activity}','{bug_list}','{sha1}','{md5}','{sha256}')"""
                 cursor.execute(sql)
                 my_db.commit()
                 cursor.close()

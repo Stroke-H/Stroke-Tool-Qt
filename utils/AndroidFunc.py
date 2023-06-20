@@ -117,6 +117,17 @@ class AndroidFunc:
             return ['未成功链接sql,请检查网络情况']
 
     @staticmethod
+    def get_devices_list():
+        result = subprocess.run(['adb', 'devices'], capture_output=True, text=True)
+        output_lines = result.stdout.strip().split('\n')
+        devices = []
+        for line in output_lines[1:]:
+            device_info = line.split('\t')
+            if len(device_info) == 2 and device_info[1] == 'device':
+                devices.append(device_info[0])
+        return devices
+
+    @staticmethod
     def get_specify_data(sql_name, select_key, table_name, select_conditions, conditions_key):
         my_db = AndroidFunc.sql_con(sql_name)
         cursor = my_db.cursor()
@@ -180,9 +191,9 @@ class AndroidFunc:
         return error_data
 
     @staticmethod
-    def get_current_package_name() -> str:
+    def get_current_package_name(devices) -> str:
         try:
-            key = 'adb shell dumpsys window | findstr mCurrentFocus'
+            key = f'adb -s {devices} shell dumpsys window | findstr mCurrentFocus'
             res = AndroidFunc.subprocess_out(key).readline().decode('utf-8').strip()
             package_name = res.split(' u0 ')[1].split('/')[0]
             return package_name
@@ -190,13 +201,13 @@ class AndroidFunc:
             logger.error(error)
 
     @staticmethod
-    def restart_current_app():
+    def restart_current_app(devices):
         try:
             package_name = AndroidFunc.get_current_package_name()
-            key1 = f"adb shell am force-stop {package_name}"
+            key1 = f"adb -s {devices} shell am force-stop {package_name}"
             AndroidFunc.subprocess_out(key1)
             time.sleep(1)
-            key2 = f"adb shell am start -n {package_name}/.UnityMain"
+            key2 = f"adb -s {devices} shell am start -n {package_name}/.UnityMain"
             AndroidFunc.subprocess_out(key2)
         except BaseException as error:
             logger.error(error)
@@ -214,7 +225,7 @@ class AndroidFunc:
             return False
 
     @staticmethod
-    def clear_cache(package_name):
+    def clear_cache(package_name, devices):
         pk_id = ''
         try:
             my_db = AndroidFunc.sql_con(sql_name='data_sql')
@@ -228,31 +239,33 @@ class AndroidFunc:
         except BaseException as error:
             logger.error(error)
         if pk_id:
-            key = f"adb shell pm clear {package_name}"
+            key = f"adb -s {devices} shell pm clear {package_name}"
+            print(key)
             result = AndroidFunc.subprocess_out(key).readline()
             res = str(result)
+            print(res)
             if 'Success' in res:
                 return 'success'
             else:
                 return 'failed'
-        elif 'android' in AndroidFunc.get_current_package_name():
+        elif 'android' in AndroidFunc.get_current_package_name(devices):
             return 'no running app'
         else:
-            current_package = AndroidFunc.get_current_package_name()
-            key = f"adb shell pm clear {current_package}"
+            current_package = AndroidFunc.get_current_package_name(devices)
+            key = f"adb -s {devices} shell pm clear {current_package}"
             AndroidFunc.subprocess_out(key)
             return 'current success'
 
     @staticmethod
-    def get_info():
+    def get_info(devices):
         try:
-            key = "adb -d shell getprop ro.product.model"
+            key = f"adb -s {devices} shell getprop ro.product.model"
             name_data = AndroidFunc.subprocess_out(key).readline()
             ad_name = name_data.decode('utf-8')
-            key = "adb shell getprop ro.build.version.release"
+            key = f"adb -s {devices} shell getprop ro.build.version.release"
             version_data = AndroidFunc.subprocess_out(key).readline()
             ad_version = version_data.decode('utf-8')
-            key = "adb shell wm size"
+            key = f"adb -s {devices} shell wm size"
             size_data = AndroidFunc.subprocess_out(key).readline()
             screen_size = size_data.decode('utf-8')
             return ad_name, ad_version, screen_size
@@ -260,10 +273,10 @@ class AndroidFunc:
             logger.error(error)
 
     @staticmethod
-    def restart_adb():
-        subprocess.Popen("adb kill-server", shell=True, stdin=subprocess.PIPE,
+    def restart_adb(devices):
+        subprocess.Popen(f"adb -s {devices} kill-server", shell=True, stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        subprocess.Popen("adb devices", shell=True, stdin=subprocess.PIPE,
+        subprocess.Popen(f"adb -s {devices} devices", shell=True, stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     """
