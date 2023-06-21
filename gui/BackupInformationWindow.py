@@ -37,6 +37,7 @@ class BackupInformationWindow(QDialog):
         self.hbox6 = QHBoxLayout()
         self.hbox7 = QHBoxLayout()
         self.hbox8 = QHBoxLayout()
+        self.hbox9 = QHBoxLayout()
         self.vbox = QVBoxLayout()
         self.vbox.addLayout(self.hbox1)
         self.vbox.addLayout(self.hbox2)
@@ -46,6 +47,7 @@ class BackupInformationWindow(QDialog):
         self.vbox.addLayout(self.hbox6)
         self.vbox.addLayout(self.hbox7)
         self.vbox.addLayout(self.hbox8)
+        self.vbox.addLayout(self.hbox9)
 
         # 第一个水平布局
         self.info_label = QLabel('项目代号：', self)
@@ -95,27 +97,50 @@ class BackupInformationWindow(QDialog):
         self.MD5_entry = QLineEdit(self)
         self.hbox7.addWidget(self.MD5_label)
         self.hbox7.addWidget(self.MD5_entry)
-        # 第八个水平布局
+
+        self.type_label = QLabel('项目Type：', self)
+        self.type_select_combo_box = QComboBox(self)
+        self.type_select_combo_box.addItems(self.get_type_list())
+        self.type_select_combo_box.setFixedSize(100, 20)
+        self.hbox8.addWidget(self.type_label)
+        self.hbox8.addWidget(self.type_select_combo_box)
+
+        # 第九个水平布局
         self.select_btn = QPushButton('查询', self)
         self.create_btn = QPushButton('新增', self)
         self.update_btn = QPushButton('修改', self)
-        self.hbox8.addWidget(self.select_btn)
-        self.hbox8.addWidget(self.create_btn)
-        self.hbox8.addWidget(self.update_btn)
+        self.hbox9.addWidget(self.select_btn)
+        self.hbox9.addWidget(self.create_btn)
+        self.hbox9.addWidget(self.update_btn)
 
         self.setLayout(self.vbox)
 
         self.show()
+
+    @staticmethod
+    def get_index_value(combo_box):
+        index = combo_box.currentIndex()
+        value = combo_box.itemText(index)
+        return value
 
     def onclick_listen(self):
         self.select_btn.clicked.connect(self.select_btn_clicked)
         self.create_btn.clicked.connect(self.create_btn_clicked)
         self.update_btn.clicked.connect(self.update_btn_clicked)
 
+    def get_type_list(self):
+        my_db = AndroidFunc.sql_con(sql_name='data_sql')
+        cursor = my_db.cursor()
+        sql = f"""SELECT type from android_game_info"""
+        cursor.execute(sql)
+        data = cursor.fetchall()
+        arr = [i[0] for i in data]
+        type_list = list(set(arr))
+        return type_list
+
     def select_btn_clicked(self):
         app_id = self.id_entry.text()
         if app_id:
-            print(app_id)
             my_db = AndroidFunc.sql_con(sql_name='data_sql')
             cursor = my_db.cursor()
             sql = f"""SELECT * from android_game_info WHERE app_id = '{app_id}'"""
@@ -139,12 +164,13 @@ class BackupInformationWindow(QDialog):
         sha1 = self.sha1_entry.text()
         sha256 = self.sha256_entry.text()
         md5 = self.MD5_entry.text()
-        if app_id and package_name and sha1 and sha256 and md5:
+        type_ = self.get_index_value(self.type_select_combo_box)
+        if app_id and package_name and sha1 and sha256 and md5 and type_:
             try:
                 my_db = AndroidFunc.sql_con(sql_name='data_sql')
                 cursor = my_db.cursor()
-                sql = f"""INSERT INTO android_game_info(app_id,package_name,launcher_activity,bugList_link,sha1,md5,sha256) 
-                                VALUE ('{app_id}','{package_name}','{launcher_activity}','{bug_list}','{sha1}','{md5}','{sha256}')"""
+                sql = f"""INSERT INTO android_game_info(app_id,package_name,launcher_activity,bugList_link,sha1,md5,sha256,type) 
+                                VALUE ('{app_id}','{package_name}','{launcher_activity}','{bug_list}','{sha1}','{md5}','{sha256}','{type_}')"""
                 cursor.execute(sql)
                 my_db.commit()
                 cursor.close()
@@ -169,13 +195,13 @@ class BackupInformationWindow(QDialog):
         sha1 = self.sha1_entry.text()
         sha256 = self.sha256_entry.text()
         md5 = self.MD5_entry.text()
+        type_ = self.get_index_value(self.type_select_combo_box)
         if app_id:
             my_db = AndroidFunc.sql_con(sql_name='data_sql')
             cursor = my_db.cursor()
             sql = f"""SELECT * from android_game_info WHERE app_id = '{app_id}'"""
             cursor.execute(sql)
             data = cursor.fetchone()
-            print(data)
             if data:
                 if package_name:
                     sql = f"""UPDATE android_game_info SET package_name='{package_name}' WHERE app_id='{app_id}'"""
@@ -201,6 +227,10 @@ class BackupInformationWindow(QDialog):
                     sql = f"""UPDATE android_game_info SET md5='{md5}' WHERE app_id='{app_id}'"""
                     cursor.execute(sql)
                     my_db.commit()
+                if type_:
+                    sql = f"""UPDATE android_game_info SET type='{type_}' WHERE app_id='{app_id}'"""
+                    cursor.execute(sql)
+                    my_db.commit()
                 self.msg_box.setIcon(QMessageBox.Information)
                 self.msg_box.setWindowTitle("修改结果")
                 self.msg_box.setText(f'''
@@ -209,6 +239,7 @@ class BackupInformationWindow(QDialog):
                         SHA1→{sha1}
                         SHA256→{sha256}
                         MD5→{md5}
+                        Type→{type_}
                         ''')
                 self.msg_box.exec_()
             else:

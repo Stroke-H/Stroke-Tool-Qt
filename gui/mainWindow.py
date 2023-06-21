@@ -44,6 +44,7 @@ class MainWindow(QMainWindow):
         self.is_open = 1
         self.devices_index = ''
         self.net_status = 'disable'
+        self.source_type = 'both'
         self.status = self.statusBar()
         self.menu_bar = self.menuBar()
         self.status.showMessage(f'{AndroidFunc.get_day_soup()} ———— 欢迎使用Stroke Tool,祝您使用愉快..', 10000)
@@ -82,10 +83,13 @@ class MainWindow(QMainWindow):
         # 菜单栏
         file_menu = self.menu_bar.addMenu('Options')
         backup_action = QAction('信息备份', self)
+        self.info_select_action = QAction('仅显示tool源', self)
         account_action = QAction('显示提现账号', self)
         backup_action.triggered.connect(self.backup_information_btn_clicked)
+        self.info_select_action.triggered.connect(self.info_select_clicked)
         account_action.triggered.connect(self.show_account_btn_clicked)
         file_menu.addAction(backup_action)
+        file_menu.addAction(self.info_select_action)
         file_menu.addAction(account_action)
 
         other_menu = self.menu_bar.addMenu('IOS Function')
@@ -795,6 +799,22 @@ class MainWindow(QMainWindow):
             self.ios_window = IosWindow(self)
             self.ios_window.exec_()
             self.open_window_list.remove('IosWindow')
+
+    def info_select_clicked(self):
+        if self.source_type == 'both' or self.source_type == 'game':
+            self.game_select_combo_box.disconnect()
+            self.game_select_combo_box.clear()
+            self.game_select_combo_box.addItems(AndroidFunc.get_tool_list())
+            self.game_select_combo_box.currentIndexChanged.connect(self.game_index_change)
+            self.info_select_action.setText('仅显示game源')
+            self.source_type = 'tool'
+        elif self.source_type == 'tool':
+            self.game_select_combo_box.disconnect()
+            self.game_select_combo_box.clear()
+            self.game_select_combo_box.addItems(AndroidFunc.get_game_list())
+            self.game_select_combo_box.currentIndexChanged.connect(self.game_index_change)
+            self.info_select_action.setText('仅显示tool源')
+            self.source_type = 'game'
 
     def pkg_and_activity_btn_clicked(self):
         key = f'adb -s {self.devices_index} shell dumpsys window | findstr mCurrentFocus'

@@ -117,6 +117,52 @@ class AndroidFunc:
             return ['未成功链接sql,请检查网络情况']
 
     @staticmethod
+    def get_tool_list():
+        try:
+            my_db = AndroidFunc.sql_con(sql_name='data_sql')
+            cursor = my_db.cursor()
+            sql = f"""select app_id from android_game_info where type='tool' order by app_id ASC
+                                   """
+            cursor.execute(sql)
+            id_res = cursor.fetchall()
+            id_arr = [i[0] for i in id_res]
+            sql = f"""select package_name from android_game_info where type='tool' order by app_id ASC
+                                   """
+            cursor.execute(sql)
+            name_res = cursor.fetchall()
+            name_arr = [i[0] for i in name_res]
+            res_arr = [f"{id_arr[i]}-{name_arr[i]}" for i in range(0, len(id_arr))]
+            cursor.close()
+            my_db.close()
+            return res_arr
+        except BaseException as error:
+            logger.error(error)
+            return ['未成功链接sql,请检查网络情况']
+
+    @staticmethod
+    def get_game_list():
+        try:
+            my_db = AndroidFunc.sql_con(sql_name='data_sql')
+            cursor = my_db.cursor()
+            sql = f"""select app_id from android_game_info where type='game' order by app_id ASC
+                                   """
+            cursor.execute(sql)
+            id_res = cursor.fetchall()
+            id_arr = [i[0] for i in id_res]
+            sql = f"""select package_name from android_game_info where type='game' order by app_id ASC
+                                   """
+            cursor.execute(sql)
+            name_res = cursor.fetchall()
+            name_arr = [i[0] for i in name_res]
+            res_arr = [f"{id_arr[i]}-{name_arr[i]}" for i in range(0, len(id_arr))]
+            cursor.close()
+            my_db.close()
+            return res_arr
+        except BaseException as error:
+            logger.error(error)
+            return ['未成功链接sql,请检查网络情况']
+
+    @staticmethod
     def get_devices_list():
         result = subprocess.run(['adb', 'devices'], capture_output=True, text=True)
         output_lines = result.stdout.strip().split('\n')
