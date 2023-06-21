@@ -332,7 +332,6 @@ class MainWindow(QMainWindow):
         self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备的语言界面已打开')
 
     def install_btn_clicked(self):
-        print(self.con_status())
         if self.con_status():
             path = AndroidFunc.get_file_path()
             if path[0]:
@@ -418,38 +417,45 @@ class MainWindow(QMainWindow):
     def restart_btn_clicked(self):
         if self.con_status():
             package_name = self.package_name_entry.text()
-            launcher_id = ''
-            try:
-                my_db = AndroidFunc.sql_con(sql_name='data_sql')
-                cursor = my_db.cursor()
-                sql = f"""select launcher_activity from android_game_info where package_name = '{package_name}'
-                                """
-                cursor.execute(sql)
-                launcher_id = cursor.fetchone()
-                cursor.close()
-                my_db.close()
-            except BaseException as error:
-                logger.error(error)
-            if launcher_id[0]:
-                self.status.showMessage(f'正在为您重启LauncherActivity为{launcher_id[0]}的app……', 3000)
-                key = f"adb -s {self.devices_index} shell am force-stop {package_name}"
-                AndroidFunc.subprocess_out(key)
-                time.sleep(1)
-                key1 = f"adb -s {self.devices_index} shell am start -n {package_name}/{launcher_id[0]}"
-                res = AndroidFunc.subprocess_err(key1).readlines()
-                if "not exist" in str(res):
-                    self.notice.warn('当前的app未安装在本设备内呀，核对再尝试一次吧')
-            elif launcher_id[0] == '':
-                key = f"adb -s {self.devices_index} shell am force-stop {package_name}"
-                AndroidFunc.subprocess_out(key)
-                time.sleep(1)
-                key1 = f"adb -s {self.devices_index} shell am start -n {package_name}/.UnityMain"
-                res = AndroidFunc.subprocess_err(key1).readlines()
-                if "not exist" in str(res):
-                    self.notice.warn('当前的app未备份LauncherActivity，核对再尝试一次吧')
+            if package_name:
+                launcher_id = ''
+                try:
+                    my_db = AndroidFunc.sql_con(sql_name='data_sql')
+                    cursor = my_db.cursor()
+                    sql = f"""select launcher_activity from android_game_info where package_name = '{package_name}'
+                                    """
+                    cursor.execute(sql)
+                    launcher_id = cursor.fetchone()
+                    cursor.close()
+                    my_db.close()
+                except BaseException as error:
+                    logger.error(error)
+                if launcher_id[0]:
+                    self.status.showMessage(f'正在为您重启LauncherActivity为{launcher_id[0]}的app……', 3000)
+                    key = f"adb -s {self.devices_index} shell am force-stop {package_name}"
+                    AndroidFunc.subprocess_out(key)
+                    time.sleep(1)
+                    key1 = f"adb -s {self.devices_index} shell am start -n {package_name}/{launcher_id[0]}"
+                    res = AndroidFunc.subprocess_err(key1).readlines()
+                    if "not exist" in str(res):
+                        self.notice.warn('当前的app未安装在本设备内呀，核对再尝试一次吧')
+                elif launcher_id[0] == '':
+                    try:
+                        key = f"adb -s {self.devices_index} shell am force-stop {package_name}"
+                        AndroidFunc.subprocess_out(key)
+                        time.sleep(1)
+                        key1 = f"adb -s {self.devices_index} shell am start -n {package_name}/.UnityMain"
+                        res = AndroidFunc.subprocess_err(key1).readlines()
+                        if "not exist" in str(res):
+                            self.notice.warn('当前的app未备份LauncherActivity，核对再尝试一次吧')
+                    except Exception as e:
+                        print(e)
             else:
-                self.status.showMessage('您未设置id，正在你重启当前应用', 3000)
-                AndroidFunc.restart_current_app(self.devices_index)
+                try:
+                    self.status.showMessage('您未设置id，正在你重启当前应用', 3000)
+                    AndroidFunc.restart_current_app(self.devices_index)
+                except Exception as e:
+                    print(e)
         else:
             self.notice.error('adb未链接，请检查设备T_T~')
 

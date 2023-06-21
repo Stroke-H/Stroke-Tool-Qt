@@ -249,7 +249,7 @@ class AndroidFunc:
     @staticmethod
     def restart_current_app(devices):
         try:
-            package_name = AndroidFunc.get_current_package_name()
+            package_name = AndroidFunc.get_current_package_name(devices)
             key1 = f"adb -s {devices} shell am force-stop {package_name}"
             AndroidFunc.subprocess_out(key1)
             time.sleep(1)
