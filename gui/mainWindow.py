@@ -257,6 +257,7 @@ class MainWindow(QMainWindow):
         self.install_adb = AdbThread(key)
         self.install_adb.output.connect(self.on_output_received)
         self.install_adb.start()
+        logger.info(f'当前开启了子进程,进程命令为:{key}')
 
     def onclick_listen(self):
         self.refresh_btn.clicked.connect(self.refresh_btn_clicked)
@@ -302,6 +303,7 @@ class MainWindow(QMainWindow):
     def restart_adb(self):
         AndroidFunc.restart_adb(self.devices_index)
         self.logTextEdit.append(f'<b>[{self.devices_index}]</b>adb已重启')
+        logger.info(f'当前重启了{self.devices_index}设备')
 
     def con_status(self):
         if self.devices_index:
@@ -330,6 +332,7 @@ class MainWindow(QMainWindow):
         key = f'adb -s {self.devices_index} shell am start -a android.settings.LOCALE_SETTINGS'
         AndroidFunc.subprocess_single(key)
         self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备的语言界面已打开')
+        logger.info("当前打开了语言界面")
 
     def install_btn_clicked(self):
         if self.con_status():
@@ -411,6 +414,7 @@ class MainWindow(QMainWindow):
             else:
                 package_name = AndroidFunc.get_current_package_name(self.devices_index)
                 self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备当前apk的包名为：{package_name}')
+                logger.info(f'当前正在获取当前包名,获取的包名为：{package_name}')
         else:
             self.notice.error('adb未链接，请检查设备T_T~')
 
@@ -418,6 +422,7 @@ class MainWindow(QMainWindow):
         if self.con_status():
             package_name = self.package_name_entry.text()
             if package_name:
+                logger.info(f'当前正在重启包名为{package_name}的应用')
                 launcher_id = ''
                 try:
                     my_db = AndroidFunc.sql_con(sql_name='data_sql')
@@ -464,6 +469,7 @@ class MainWindow(QMainWindow):
             package_name = self.package_name_entry.text()
             rec_data = AndroidFunc.clear_cache(package_name, self.devices_index)
             self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备将执行清除缓存操作！')
+            logger.info(f'当前正在清除包名为：{package_name}的应用')
             match rec_data:
                 case 'success':
                     self.notice.success('已经清除了指定的应用缓存啦^0^~~')
@@ -581,6 +587,7 @@ class MainWindow(QMainWindow):
         self.devices_select_combo_box.addItems(AndroidFunc.get_devices_list())
         self.devices_select_combo_box.currentIndexChanged.connect(self.devices_index_change)
         self.devices_index = self.get_index_value(self.devices_select_combo_box)
+        logger.info('当前刷新了下拉栏的信息')
 
     def bug_list_btn_clicked(self):
         if self.con_status():
@@ -614,6 +621,7 @@ class MainWindow(QMainWindow):
             self.thread_start(cmd_pull)
             self.img_id += 1
             self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备将执行屏幕截图操作！')
+            logger.info('当前执行了截图操作')
         else:
             self.notice.error('adb未链接，请检查设备T_T~')
 
@@ -622,6 +630,7 @@ class MainWindow(QMainWindow):
             key = f'adb -s {self.devices_index} shell am start -a android.intent.action.VIEW -d "https://www.ipaddress.my/?lang=zh_CN"'
             AndroidFunc.subprocess_out(key)
             self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备将打开ip页面')
+            logger.info('当前设备将打开ip页面')
             self.notice.success(
                 "IP已在手机上打开对应网页，请确认结果PS:本功能依赖Google功能，适用使用梯子的场景，需要翻墙若国内网未正常显示为正常现象,链接vpn即可")
         else:
@@ -638,10 +647,12 @@ class MainWindow(QMainWindow):
                     self.notice.success('当前已关闭网络')
                     self.status.showMessage("当前网络状态：关闭", 5000)
                     self.net_status = 'enable'
+                    logger.info('当前已关闭手机wifi网络')
                 case 'enable':
                     self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备的WiFi已经打开')
                     self.notice.success('网络已经重新打开')
                     self.status.showMessage("当前网络状态：打开", 5000)
+                    logger.info('当前已打开手机wifi网络')
                     self.net_status = 'disable'
                 case _:
                     self.notice.warn("操作异常")
@@ -673,6 +684,7 @@ class MainWindow(QMainWindow):
             if len(sha1[0]) > 2:
                 if apk_path[0]:
                     if 'apk' or 'aab' in apk_path[0]:
+                        logger.info('当前正进行签名比对操作')
                         apk_sign = ''
                         apk_sha256 = ''
                         apk_md5 = ''
@@ -712,6 +724,7 @@ class MainWindow(QMainWindow):
 
     def clear_screenshot_btn_clicked(self):
         AndroidFunc.get_desktop()
+        logger.info('当前正在删除截图')
         if self.img_id == 1:
             while True:
                 try:
@@ -740,6 +753,7 @@ class MainWindow(QMainWindow):
             AndroidFunc.subprocess_single(key)
             self.notice.success('已在手机上打开当前包名关联的google链接')
             self.logTextEdit.append(f'<b>[{devices}]</b>设备已经开打了指定的商店链接')
+            logger.info(f'[{devices}]设备已经开打了指定的商店链接')
         else:
             self.notice.error('当前包名关联游戏未在数据库备份')
 
@@ -758,6 +772,7 @@ class MainWindow(QMainWindow):
             self.msg_box.setWindowTitle("查询结果")
             self.msg_box.setText(f"{str(permission_arr)}")
             self.msg_box.exec_()
+            logger.info('当前正在执行权限获取操作')
         else:
             self.notice.error('您未选择文件或文件格式有误')
 
@@ -769,6 +784,7 @@ class MainWindow(QMainWindow):
             self.interact_window = InteractWindow(self)
             self.interact_window.exec_()
             self.open_window_list.remove('interact_window')
+            logger.info('打开了interact_window')
 
     def del_panel_btn_clicked(self):
         if 'DelAccountWindow' in self.open_window_list:
@@ -778,6 +794,7 @@ class MainWindow(QMainWindow):
             self.del_account_window = DelAccountWindow(self)
             self.del_account_window.exec_()
             self.open_window_list.remove('DelAccountWindow')
+            logger.info('打开了DelAccountWindow')
 
     def backup_information_btn_clicked(self):
         if 'BackupInformationWindow' in self.open_window_list:
@@ -787,6 +804,7 @@ class MainWindow(QMainWindow):
             self.backup_info_window = BackupInformationWindow(self)
             self.backup_info_window.exec_()
             self.open_window_list.remove('BackupInformationWindow')
+            logger.info('打开了BackupInformationWindow')
 
     def show_account_btn_clicked(self):
         key = 'account'
@@ -805,6 +823,7 @@ class MainWindow(QMainWindow):
             self.ios_window = IosWindow(self)
             self.ios_window.exec_()
             self.open_window_list.remove('IosWindow')
+            logger.info('打开了IosWindow')
 
     def info_select_clicked(self):
         if self.source_type == 'both' or self.source_type == 'game':
@@ -821,6 +840,7 @@ class MainWindow(QMainWindow):
             self.game_select_combo_box.currentIndexChanged.connect(self.game_index_change)
             self.info_select_action.setText('仅显示tool源')
             self.source_type = 'game'
+        logger.info('切换了信息源')
 
     def pkg_and_activity_btn_clicked(self):
         key = f'adb -s {self.devices_index} shell dumpsys window | findstr mCurrentFocus'
