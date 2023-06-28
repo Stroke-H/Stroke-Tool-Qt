@@ -29,6 +29,15 @@ class AdbThread(QThread):
     def run(self):
         cmd = self.cmd
         if ' install' in cmd:
+            path = cmd.split('install ')[1]
+            key = fr'aapt dump badging "{path}"'
+            res = subprocess.Popen(key, shell=True, stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            data_res = str(res.stdout.readlines())
+            data_pkg = data_res.split("name='")[1].split("' versionCode")[0]
+            data_activity = data_res.split("launchable-activity: name='")[1].split("'  label=")[0]
+            self.output.emit(f'当前正在安装的APK PackageName为：<b>{data_pkg}</b>')
+            self.output.emit(f'当前正在安装的APK LauncherActivity为：<b>{data_activity}</b>')
             proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
             self.output.emit('APK开始安装>>>>>请稍等......')
@@ -192,13 +201,13 @@ class AdbThread(QThread):
             # if proc.returncode != 0:
             #     error = proc.stderr.read().decode()
             #     self.output.emit(error)
-        elif 'adb shell pm list packages -3' in cmd:
+        elif 'shell pm list packages -3' in cmd:
             res = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             data = res.stdout.readlines()
             for pkg in data:
                 self.output.emit(pkg.decode('utf-8').strip())
-        elif 'adb shell pm list packages' == cmd:
+        elif 'shell pm list packages' == cmd:
             res = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             data = res.stdout.readlines()

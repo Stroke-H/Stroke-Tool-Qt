@@ -347,7 +347,7 @@ class MainWindow(QMainWindow):
                         cursor.close()
                         my_db.close()
                         self.package_name_entry.setText(game_id)
-                        self.status.showMessage(f'<b>[{self.devices_index}]</b>正在安装中,请稍等……', 3000)
+                        self.status.showMessage(f'[{self.devices_index}]正在安装中,请稍等……', 3000)
                         self.logTextEdit.append(f'<b>[{self.devices_index}]</b>将执行安装操作！')
                     except BaseException as err:
                         self.notice.warn('您当前安装的应用非本公司项目或命名不规范，正在为您安装，请稍等')
