@@ -137,7 +137,7 @@ class AdbThread(QThread):
             res = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             data = str(res.stdout.readline()).split("name='")[1].split("' versionCode")[0]
-            self.output.emit(f'当前apk的包名为：{data}')
+            self.output.emit(f'当前apk的包名为：<b>{data}</b>')
         elif 'withdraw' in cmd:
             clear_key = 'adb logcat -c'
             res1 = subprocess.Popen(clear_key, shell=True, stdin=subprocess.PIPE,

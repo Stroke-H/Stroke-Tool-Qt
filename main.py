@@ -13,4 +13,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)  # 实例化窗口
     bootstrap_window = MainWindow()  # 引导窗口展示
     sys.exit(app.exec_())  # 遇到退出情况，终止程序
- 
+  
