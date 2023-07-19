@@ -162,7 +162,6 @@ class AdbThread(QThread):
                     res = subprocess.Popen(clear_key, shell=True, stdin=subprocess.PIPE,
                                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         elif 'logcat -v threadtime' in cmd:
-
             keyword_reg = 'uid_fission='
             res = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -207,7 +206,7 @@ class AdbThread(QThread):
             data = res.stdout.readlines()
             for pkg in data:
                 self.output.emit(pkg.decode('utf-8').strip())
-        elif 'shell pm list packages' == cmd:
+        elif 'shell pm list packages' in cmd:
             res = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             data = res.stdout.readlines()

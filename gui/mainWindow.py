@@ -8,7 +8,7 @@
 """
 
 import time
-from PyQt5.QtWidgets import QMessageBox, QToolTip
+from PyQt5.QtWidgets import QMessageBox, QToolTip, QApplication, QSplashScreen, QLabel, QMainWindow
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from utils.AndroidFunc import AndroidFunc, logger
@@ -16,6 +16,7 @@ from gui.dialog import *
 from gui.InteractWindow import InteractWindow
 from gui.DelAccountWindow import DelAccountWindow
 from gui.BackupInformationWindow import BackupInformationWindow
+from gui.AuthorizeWindow import AuthorizeWindow
 from gui.IosWindow import IosWindow
 from utils.AdbThread import AdbThread
 import subprocess
@@ -29,7 +30,7 @@ class MainWindow(QMainWindow):
     def __init__(self):  # 初始化 继承父类QMainWindow
         super().__init__()
         index_x, index_y = AndroidFunc.get_desktop_size()
-        self.setGeometry(int(index_x / 2) - 350, int(index_y / 2) - 175, 750, 375)  # 设置窗口大小
+        self.setGeometry(int(index_x / 2) - 390, int(index_y / 2) - 175, 750, 375)  # 设置窗口大小
         self.setMinimumSize(750, 375)
         self.setWindowTitle("Stroke Tool 4.1.1")
         self.setWindowIcon(QIcon(r'C:\Users\dell\PycharmProjects\QtProject\img\husky.png'))
@@ -70,6 +71,7 @@ class MainWindow(QMainWindow):
         self.hbox_7 = QHBoxLayout()
         self.hbox_8 = QHBoxLayout()
         self.hbox_9 = QHBoxLayout()
+        self.hbox_10 = QHBoxLayout()
         self.vbox.addLayout(self.hbox_1)
         self.vbox.addLayout(self.hbox_2)
         self.vbox.addLayout(self.hbox_3)
@@ -79,6 +81,7 @@ class MainWindow(QMainWindow):
         self.vbox.addLayout(self.hbox_7)
         self.vbox.addLayout(self.hbox_8)
         self.vbox.addLayout(self.hbox_9)
+        self.vbox.addLayout(self.hbox_10)
 
         # 菜单栏
         file_menu = self.menu_bar.addMenu('Options')
@@ -96,17 +99,6 @@ class MainWindow(QMainWindow):
         ios_action = QAction('IOS功能界面', self)
         ios_action.triggered.connect(self.ios_panel_btn_clicked)
         other_menu.addAction(ios_action)
-
-        adb_info_menu = self.menu_bar.addMenu('adb常用命令')
-        pkg_and_activity_action = QAction('当前pkg和activity', self)
-        all_pkg_action = QAction('显示所有包名', self)
-        third_pkg = QAction('显示第三方包名', self)
-        pkg_and_activity_action.triggered.connect(self.pkg_and_activity_btn_clicked)
-        all_pkg_action.triggered.connect(self.all_pkg_btn_clicked)
-        third_pkg.triggered.connect(self.third_pkg_btn_clicked)
-        adb_info_menu.addAction(pkg_and_activity_action)
-        adb_info_menu.addAction(all_pkg_action)
-        adb_info_menu.addAction(third_pkg)
 
         # android_com_func_menu = self.menu_bar.addMenu('Android常用功能')
         # show_date_panel = QAction('打开时间界面', self)
@@ -168,8 +160,8 @@ class MainWindow(QMainWindow):
         self.current_package_btn.setToolTip('选择一个<b>APK</b>查看对应的包名,如果不选择则查看当前运行的程序包名')
         self.restart_btn = QPushButton('APP重启', self)
         self.restart_btn.setToolTip('重启<b>输入栏</b>中对应包名的应用,如果没输入则重启当前运行的应用')
-        self.open_language_btn = QPushButton('语言目录', self)
-        self.open_language_btn.setToolTip('直接打开手机的<b>语言设置页面</b>,当前适配手机:<b>pixel</b>')
+        self.current_pkg_and_act_btn = QPushButton('当前P和L', self)
+        self.current_pkg_and_act_btn.setToolTip('显示<b>当前运行</b>应用的packageName和launcherActivity')
         self.permission_check_btn = QPushButton('查看权限', self)
         self.permission_check_btn.setToolTip('查看选中APK的<b>权限使用情况</b>')
         self.hbox_3.addWidget(self.install_btn)
@@ -179,7 +171,7 @@ class MainWindow(QMainWindow):
         self.hbox_3.addWidget(self.get_token_id_btn)
         self.hbox_3.addWidget(self.current_package_btn)
         self.hbox_3.addWidget(self.restart_btn)
-        self.hbox_3.addWidget(self.open_language_btn)
+        self.hbox_3.addWidget(self.current_pkg_and_act_btn)
         self.hbox_3.addWidget(self.permission_check_btn)
 
         # 第四个水平布局的按钮
@@ -220,36 +212,60 @@ class MainWindow(QMainWindow):
         self.hbox_5.addWidget(self.del_panel_btn)
         self.hbox_5.addWidget(self.open_google_link_btn)
 
-        # 第六个水平布局的按钮
+        self.open_language_btn = QPushButton('语言目录', self)
+        self.open_language_btn.setToolTip('直接打开手机的<b>语言设置页面</b>,当前适配手机:<b>pixel</b>')
+        self.open_date_btn = QPushButton('时间目录', self)
+        self.open_date_btn.setToolTip('直接打开手机的<b>时间设置页面</b>,当前适配手机:<b>pixel</b>')
+        self.show_all_pkg_name_btn = QPushButton('所有pkg', self)
+        self.show_all_pkg_name_btn.setToolTip('log打印手机的<b>所有packageName</b>')
+        self.show_3_pkg_name_btn = QPushButton('第三方pkg', self)
+        self.show_3_pkg_name_btn.setToolTip('log打印手机的<b>所有第三方packageName</b>')
+        self.monkey_test_btn = QPushButton('启动Xtest', self)
+        self.monkey_test_btn.setToolTip('启动手机上的<b>xtest的架构包</b>')
+        self.test_btn = QPushButton('预留BTN', self)
+        self.test_btn2 = QPushButton('预留BTN', self)
+        self.test_btn3 = QPushButton('预留BTN', self)
+        self.test_btn4 = QPushButton('预留BTN', self)
+        self.hbox_6.addWidget(self.open_language_btn)
+        self.hbox_6.addWidget(self.open_date_btn)
+        self.hbox_6.addWidget(self.show_all_pkg_name_btn)
+        self.hbox_6.addWidget(self.show_3_pkg_name_btn)
+        self.hbox_6.addWidget(self.monkey_test_btn)
+        self.hbox_6.addWidget(self.test_btn)
+        self.hbox_6.addWidget(self.test_btn2)
+        self.hbox_6.addWidget(self.test_btn3)
+        self.hbox_6.addWidget(self.test_btn4)
+
+        # 第七个水平布局的按钮
         self.left_line_label_3 = QLabel('===========================================', self)
         self.status_label = QLabel('Current Connect Status', self)
         self.status_label.setAlignment(Qt.AlignCenter)
         self.right_line_label_3 = QLabel('===========================================', self)
-        self.hbox_6.addWidget(self.left_line_label_3)
-        self.hbox_6.addWidget(self.status_label)
-        self.hbox_6.addWidget(self.right_line_label_3)
+        self.hbox_7.addWidget(self.left_line_label_3)
+        self.hbox_7.addWidget(self.status_label)
+        self.hbox_7.addWidget(self.right_line_label_3)
 
-        # 第七个水平布局的按钮
+        # 第八个水平布局的按钮
         self.model_label = QLabel('', self)
         self.model_label.setAlignment(Qt.AlignCenter)
         self.version_label = QLabel('', self)
         self.version_label.setAlignment(Qt.AlignCenter)
         self.size_label = QLabel('', self)
         self.size_label.setAlignment(Qt.AlignCenter)
-        self.hbox_7.addWidget(self.model_label)
-        self.hbox_7.addWidget(self.version_label)
-        self.hbox_7.addWidget(self.size_label)
+        self.hbox_8.addWidget(self.model_label)
+        self.hbox_8.addWidget(self.version_label)
+        self.hbox_8.addWidget(self.size_label)
 
-        # 第八个水平布局的按钮
+        # 第九个水平布局的按钮
         self.end_line_label = QLabel(
             '==============================================================================='
             '================================================================', self)
-        self.hbox_8.addWidget(self.end_line_label)
+        self.hbox_9.addWidget(self.end_line_label)
 
-        # 第九个水平布局的按钮
+        # 第十个水平布局的按钮
         self.logTextEdit = QTextEdit()
         self.logTextEdit.setReadOnly(True)
-        self.hbox_9.addWidget(self.logTextEdit)
+        self.hbox_10.addWidget(self.logTextEdit)
 
         self.show()
 
@@ -282,6 +298,11 @@ class MainWindow(QMainWindow):
         self.open_google_link_btn.clicked.connect(self.open_google_link_btn_clicked)
         self.permission_check_btn.clicked.connect(self.permission_check_btn_clicked)
         self.open_language_btn.clicked.connect(self.open_language_btn_clicked)
+        self.open_date_btn.clicked.connect(self.open_date_btn_clicked)
+        self.current_pkg_and_act_btn.clicked.connect(self.pkg_and_activity_btn_clicked)
+        self.show_all_pkg_name_btn.clicked.connect(self.all_pkg_btn_clicked)
+        self.show_3_pkg_name_btn.clicked.connect(self.third_pkg_btn_clicked)
+        self.monkey_test_btn.clicked.connect(self.start_xtest)
 
     def game_index_change(self):
         self.default_id = self.get_index_value(self.game_select_combo_box)
@@ -333,6 +354,20 @@ class MainWindow(QMainWindow):
         AndroidFunc.subprocess_single(key)
         self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备的语言界面已打开')
         logger.info("当前打开了语言界面")
+
+    def open_date_btn_clicked(self):
+        key = f'adb -s {self.devices_index} shell am start -a android.settings.DATE_SETTINGS'
+        AndroidFunc.subprocess_single(key)
+        self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备的时间界面已打开')
+        logger.info("当前打开了语言界面")
+
+    def start_xtest(self):
+        if AndroidFunc.check_file_exist(self.devices_index, '/data/local/tmp/', 'xtest-agent'):
+            cmd = 'adb shell /data/local/tmp/xtest-agent server -d "$@"'
+            AndroidFunc.subprocess_single(cmd)
+            self.logTextEdit.append(f'检测到您手机内有必要软件，已经为设备<b>[{self.devices_index}]</b>启动xtest')
+        else:
+            self.logTextEdit.append('您手机内没有架构包,请下载后重试')
 
     def install_btn_clicked(self):
         if self.con_status():
@@ -806,6 +841,12 @@ class MainWindow(QMainWindow):
             self.open_window_list.remove('BackupInformationWindow')
             logger.info('打开了BackupInformationWindow')
 
+    def authorize_window_btn_clicked(self):
+        self.authorize_window = AuthorizeWindow(self)
+        self.authorize_window.exec_()
+        # self.open_window_list.remove('AuthorizeWindow')
+        logger.info('打开了BackupInformationWindow')
+
     def show_account_btn_clicked(self):
         key = 'account'
         self.thread_start(key)
@@ -853,10 +894,6 @@ class MainWindow(QMainWindow):
         self.notice.info("已经显示所有第三方包名啦~")
 
     def all_pkg_btn_clicked(self):
-        key = f'adb -s {self.devices_index} shell pm list packages'''
+        key = f'adb -s {self.devices_index} shell pm list packages'
         self.thread_start(key)
         self.notice.info("已经显示所有包名啦~")
-
-
-if __name__ == "__main__":
-    pass

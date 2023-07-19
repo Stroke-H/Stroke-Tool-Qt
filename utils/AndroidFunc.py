@@ -20,6 +20,7 @@ import sys
 from tidevice import Usbmux
 from tidevice import Device
 from tidevice._ipautil import IPAReader
+import os
 
 logger = Logger(logger='Strke Tool').getlog()
 
@@ -164,7 +165,7 @@ class AndroidFunc:
 
     @staticmethod
     def get_devices_list():
-        result = subprocess.run(['adb', 'devices'], capture_output=True, text=True)
+        result = subprocess.run(['adb', 'devices'], shell=True, capture_output=True, text=True)
         output_lines = result.stdout.strip().split('\n')
         devices = []
         for line in output_lines[1:]:
@@ -207,6 +208,19 @@ class AndroidFunc:
         data = res.stdout.readline()
         logger.info(f'执行了cmd命令:{command}')
         return data
+
+    @staticmethod
+    def check_file_exist(device_serial, directory, file_name):
+        command = f'adb -s {device_serial} shell ls {directory}'
+        result = os.popen(command).read().strip()
+
+        # 判断目录下是否存在指定文件
+        if file_name in result:
+            logger.info(f"目录 {directory} 下存在文件 {file_name}")
+            return True
+        else:
+            logger.error(f"目录 {directory} 下不存在文件 {file_name}")
+            return False
 
     # 多行打印cmd命令
     @staticmethod
