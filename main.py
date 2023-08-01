@@ -8,14 +8,9 @@
 # """
 #
 from gui.mainWindow import *
-#
-# if __name__ == "__main__":
-#     app = QApplication(sys.argv)  # 实例化窗口
-#     bootstrap_window = MainWindow()  # 引导窗口展示
-#     sys.exit(app.exec_())  # 遇到退出情况，终止程序
 import os
 import sys
-import subprocess
+# import subprocess
 from PyQt5.QtWidgets import QApplication, QSplashScreen, QLabel, QVBoxLayout
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt, QTimer
@@ -24,12 +19,12 @@ from PyQt5.QtCore import Qt, QTimer
 def show_splash_screen():
     app = QApplication([])
     splash_image_path = os.path.join(os.path.dirname(__file__), '1.png')
-    splash_pixmap = QPixmap(splash_image_path).scaled(750, 375)
+    splash_pixmap = QPixmap(splash_image_path).scaled(913, 540)
     splash_screen = QSplashScreen(splash_pixmap, Qt.WindowStaysOnTopHint)
     splash_screen.show()
 
     # 模拟应用程序加载的过程
-    progress_label = QLabel(f"{AndroidFunc.get_day_soup()}", alignment=Qt.AlignBottom | Qt.AlignHCenter)
+    progress_label = QLabel(f"{AndroidFunc.get_day_soup()}", alignment=Qt.AlignTop | Qt.AlignRight)
     font = progress_label.font()
     font.setPointSize(16)  # 设置字体大小
     font.setBold(True)  # 设置字体加粗

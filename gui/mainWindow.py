@@ -8,6 +8,7 @@
 """
 
 import time
+
 from PyQt5.QtWidgets import QMessageBox, QToolTip, QApplication, QSplashScreen, QLabel, QMainWindow
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -23,6 +24,7 @@ import subprocess
 import platform
 import os
 import sys
+import requests
 
 
 # noinspection PyAttributeOutsideInit
@@ -32,9 +34,13 @@ class MainWindow(QMainWindow):
         index_x, index_y = AndroidFunc.get_desktop_size()
         self.setGeometry(int(index_x / 2) - 390, int(index_y / 2) - 175, 750, 375)  # 设置窗口大小
         self.setMinimumSize(750, 375)
-        self.setWindowTitle("Stroke Tool 4.1.1")
-        self.setWindowIcon(QIcon(r'C:\Users\dell\PycharmProjects\QtProject\img\husky.png'))
-        # self.setWindowIcon(QIcon(r'C:\Users\dell\Desktop\ico.ico'))
+        self.setWindowTitle("Stroke Tool 4.2.1")
+        url = 'https://img95.699pic.com/xsj/1r/9r/g0.jpg%21/fw/700/watermark/url/L3hzai93YXRlcl9kZXRhaWwyLnBuZw/align/southeast'
+        response = requests.get(url)
+        pixmap = QPixmap()
+        pixmap.loadFromData(response.content)
+        icon = QIcon(pixmap)
+        self.setWindowIcon(icon)
         # self.setWindowIcon(QIcon(QPixmap(r'C:\Users\dell\PycharmProjects\pyqtProject\image\icon_new.ico')))
         self.setWindowOpacity(0.9)  # 设置窗口透明度
         self.notice = Notice()
@@ -363,11 +369,16 @@ class MainWindow(QMainWindow):
 
     def start_xtest(self):
         if AndroidFunc.check_file_exist(self.devices_index, '/data/local/tmp/', 'xtest-agent'):
-            cmd = 'adb shell /data/local/tmp/xtest-agent server -d "$@"'
+            cmd = f'adb -s {self.devices_index} shell chmod 755 /data/local/tmp/xtest-agent'
+            AndroidFunc.subprocess_single(cmd)
+            cmd = f'adb -s {self.devices_index} shell /data/local/tmp/xtest-agent server --stop'
+            AndroidFunc.subprocess_single(cmd)
+            cmd = f'adb -s {self.devices_index} shell /data/local/tmp/xtest-agent server -d "$@"'
             AndroidFunc.subprocess_single(cmd)
             self.logTextEdit.append(f'检测到您手机内有必要软件，已经为设备<b>[{self.devices_index}]</b>启动xtest')
         else:
-            self.logTextEdit.append('您手机内没有架构包,请下载后重试')
+            key = f'start download*-*{self.devices_index}'
+            self.thread_start(key)
 
     def install_btn_clicked(self):
         if self.con_status():
@@ -534,68 +545,67 @@ class MainWindow(QMainWindow):
     def install_referer_btn_clicked(self):
         if self.con_status():
             temp = self.package_name_entry.text()
-            apk_path = AndroidFunc.get_file_path()[0]
-            if temp and apk_path:
-                uninstall_key = f'adb -s {self.devices_index} uninstall {temp}'
-                AndroidFunc.subprocess_single(uninstall_key)
-                self.logTextEdit.append('正在进行商店跳转，请稍等>>>>>>>>')
-                stop_key = f'adb -s {self.devices_index} shell am force-stop com.android.vending'
-                AndroidFunc.subprocess_single(stop_key)
-                time.sleep(1)
-                if '.apk' in apk_path:
-                    match temp:
-                        case 'A837':
-                            link_key = f'adb -s {self.devices_index} shell am start -a android.intent.action.VIEW -d "https://play.google.com/store/apps/details?id=com.eliminar.palavras.game&referrer=utm_source%3Dgoogle%26utm_medium%3Dcpc%26anid%3Dadmob" >nul'
-                        case _:
-                            link_key = f'adb -s {self.devices_index} shell am start -a android.intent.action.VIEW -d "https://play.google.com/store/apps/' \
-                                       f'details?id={temp}&referrer=utm_source%3Dgoogle%26utm_medium%3Dcpc%26utm_term%3Drunning' \
-                                       f'%252Bshoes%26utm_content%3Dlogolink%26utm_campaign%3Dspring_sale"'
-                    AndroidFunc.subprocess_single(link_key)
-                    print(link_key)
-                    time.sleep(10)
-                    self.logTextEdit.append('正在进行apk安装并切换organic>>>>>>>')
-                    install_key = f'adb -s {self.devices_index} install {apk_path}'
-                    AndroidFunc.subprocess_single(install_key)
-                    time.sleep(2)
-                    self.logTextEdit.append('安装完成，请打开游戏查看切换状况')
-                elif '.aab' in apk_path:
+            path = AndroidFunc.get_file_path()
+            if temp and path:
+                if 'apk' in path[0]:
+                    try:
+                        game_code = path[0].split('/')[-1].split('_')[0]
+                        my_db = AndroidFunc.sql_con(sql_name='data_sql')
+                        cursor = my_db.cursor()
+                        sql = f"""select package_name from android_game_info where app_id = '{game_code}'
+                                                                                        """
+                        cursor.execute(sql)
+                        game_id = cursor.fetchone()[0]
+                        cursor.close()
+                        my_db.close()
+                        self.package_name_entry.setText(game_id)
+                        self.status.showMessage(f'[{self.devices_index}]正在安装中,请稍等……', 3000)
+                        self.logTextEdit.append(f'<b>[{self.devices_index}]</b>将执行安装操作！')
+                    except BaseException as err:
+                        self.notice.warn('您当前安装的应用非本公司项目或命名不规范，正在为您安装，请稍等')
+                        self.logTextEdit.append(f'<b>[{self.devices_index}]</b>将执行安装操作！')
+                    time.sleep(1)
+                    key = f'adb -s {self.devices_index} install "{path[0]}"'
+                    self.thread_start(key)
+                elif '.aab' in path[0]:
                     self.logTextEdit.append('正在进行aab安装并切换organic>>>>>>>')
                     link_key = f'adb -s {self.devices_index} shell am start -a android.intent.action.VIEW -d "https://play.google.com/store/apps/' \
                                f'details?id={temp}&referrer=utm_source%3Dgoogle%26utm_medium%3Dcpc%26utm_term%3Drunning' \
                                f'%252Bshoes%26utm_content%3Dlogolink%26utm_campaign%3Dspring_sale"'
                     AndroidFunc.subprocess_single(link_key)
-                    time.sleep(10)
-                    work_path = os.getcwd()
-                    my_path = str(AndroidFunc.get_desktop())
-                    system_path = my_path.replace('Desktop', '')
-                    os.chdir(system_path)
-                    key = fr'java -jar {my_path}\bundletool.jar build-apks --connected-device --bundle="{apk_path}" --output=b.apks'
-                    turn_apk = AndroidFunc.subprocess_multiple(key)
-                    res = str(turn_apk)
-                    if 'The APKs will be signed with the debug keystore found at' in res:
-                        key = fr'java -jar {my_path}\bundletool.jar install-apks --apks=b.apks --device-id={self.devices_index}'
-                        apk_install = AndroidFunc.subprocess_multiple(key)
-                        res_out = str(apk_install)
-                        # res_err = str(apk_install.stderr.readlines())
-                        key1 = fr'del b.apks'
-                        AndroidFunc.subprocess_single(key1)
-                        if 'Failed to commit install session' in res_out:
-                            self.logTextEdit.append(f"""
-                                               安装失败！！！
-                                               设备内已有相同或更高版本的apk包、或装有相同签名的apk
-                                               当前冲突内容：{res_out.split('Package')[1].split('signatures')[0]}
-                                               """)
-                            print(res_out)
+                    game_code = path[0].split('/')[-1].split('_')[0]
+                    try:
+                        my_db = AndroidFunc.sql_con(sql_name='data_sql')
+                        cursor = my_db.cursor()
+                        sql = f"""select package_name from android_game_info where app_id = '{game_code}'
+                                                                                                                        """
+                        cursor.execute(sql)
+                        game_id = cursor.fetchone()[0]
+                        cursor.close()
+                        my_db.close()
+                        self.package_name_entry.setText(game_id)
+                    except BaseException as error:
+                        self.logTextEdit.append(str(error))
+                        self.notice.info('当前安装的应用名不符合标准规范~')
+                    finally:
+                        work_path = os.getcwd()
+                        my_path = str(AndroidFunc.get_desktop())
+                        system_path = my_path.replace('Desktop', '')
+                        os.chdir(system_path)
+                        self.status.showMessage(f'<b>[{self.devices_index}]</b>正在转化aab->apk,请稍等……', 3000)
+                        model = platform.node()
+                        if model != 'DESKTOP-FHQH1MA':
+                            key = fr'java -jar {my_path}\bundletool.jar build-apks --connected-device --bundle="{path[0]}" --output=b.apks*-*{self.devices_index}'
                         else:
-                            self.logTextEdit.append('aab安装成功')
-                    else:
-                        self.logTextEdit.append("""
-                                           转包失败
-                                           失败原因:{res}""")
-                    os.chdir(work_path)
+                            key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --ks=C:\Users\dell\my-release-key.keystore --ks-pass=pass:102712 --ks-key-alias=hmh --key-pass=pass:102712*-*{self.devices_index}'
+                        self.thread_start(key)
+                        os.chdir(work_path)
+                else:
+                    self.notice.warn("您选择的文件不是aab或apk哦~")
             else:
-                self.logTextEdit.append('您未设置对应游戏appid或选择的文件格式有误，请确认后重试')
-                self.notice.warn('您未设置对应游戏appid或选择的文件格式有误，请确认后重试')
+                self.notice.warn("您还没选择文件呀~~")
+        else:
+            self.notice.error('adb未链接，请检查设备T_T~')
 
     def get_token_id_btn_clicked(self):
         if self.con_status():

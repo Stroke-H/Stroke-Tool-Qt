@@ -52,7 +52,7 @@ class BackupInformationWindow(QDialog):
         # 第一个水平布局
         self.info_label = QLabel('项目代号：', self)
         self.id_entry = QLineEdit(self)
-        reg = QRegExp('^[A-Z0-9]{4}$')
+        reg = QRegExp('^[A-Z0-9]{5}$')
         validator = QRegExpValidator(self)  # 正则匹配规则
         validator.setRegExp(reg)
         self.id_entry.setValidator(validator)

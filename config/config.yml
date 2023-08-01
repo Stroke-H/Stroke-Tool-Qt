@@ -1,0 +1,15 @@
+data_sql:
+  host: 47.97.10.30
+  user: webeye_test_info
+  password: Just8023,./
+  database: webeye_test_info
+
+bingo_sql:
+  host: 106.75.36.211
+  user: gamehall
+  password: Sg,SAA+7B6?Q
+  database: bingo
+
+
+download_link:
+  xtest-agent: http://172.16.32.30:8000/download_file/xtest-agent

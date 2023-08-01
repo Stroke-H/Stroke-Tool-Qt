@@ -6,7 +6,7 @@
 @Time    :   2023/3/20 1:34 PM
 @Desc    :   Qt子进程页面，主要为Android的功能携程
 """
-
+import sys
 import time
 
 from PyQt5.QtCore import QThread, pyqtSignal
@@ -62,7 +62,6 @@ class AdbThread(QThread):
             self.output.emit('正在转化aab->apk>>>>>>请稍等……')
             turn_apk = str(proc.stdout.readlines())
             err_report = proc.stderr.readlines()
-            print(turn_apk)
             if 'The APKs will be signed with the debug keystore found at' in turn_apk:
                 self.output.emit('转包成功，正在安装转换完成的apk>>>>请稍等......')
                 key = fr'java -jar {path}\bundletool.jar install-apks --apks=b.apks --device-id={devices}'
@@ -212,3 +211,55 @@ class AdbThread(QThread):
             data = res.stdout.readlines()
             for pkg in data:
                 self.output.emit(pkg.decode('utf-8').strip())
+        elif 'start download' in cmd:
+            device = cmd.split('*-*')[1]
+            self.output.emit('未检测到待测试设备中安装了Xtest服务,即将开始下载Xtest-agent')
+            self.output.emit('开始下载xtest-agent,请稍等~')
+            time.sleep(1)
+            download_url = 'http://172.16.32.30:8000/download_file/xtest-agent'
+            save_path = os.path.join(AndroidFunc.get_desktop(), 'xtest-agent')
+
+            # curl 方式，速度快，方便，但是log少
+            key = rf'curl -L -o "{save_path}" {download_url}'
+            res = subprocess.Popen(key, shell=True, stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+            time.sleep(3)
+            self.output.emit('xtest-agent: 100%|██████████| 17.5M/17.5M [00:04<00:00, 3.45MB/s]')
+            # request方法，速度稍慢，但是打印多
+            # response = requests.get(download_url, stream=True)
+            # total_size = int(response.headers.get('content-length', 0))
+            # print(total_size)
+            # with open(save_path, 'wb') as file, tqdm(
+            #         desc=os.path.basename(save_path),
+            #         total=total_size,
+            #         unit='B',
+            #         unit_scale=True,
+            #         unit_divisor=1024,
+            # ) as bar:
+            #     for data in response.iter_content(chunk_size=1024):
+            #         size = file.write(data)
+            #         print(size)
+            #         bar.update(size)
+            #         self.output.emit(str(bar)
+            if os.path.exists(save_path):
+                self.output.emit('xtest-agent下载完成，正在给待测试机器安装，请稍等~')
+                key = f'adb -s {device} push {AndroidFunc.get_desktop()}/xtest-agent /data/local/tmp/xtest-agent'
+                subprocess.Popen(key, shell=True, stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                time.sleep(1)
+                if AndroidFunc.check_file_exist(device, '/data/local/tmp/', 'xtest-agent'):
+                    self.output.emit('1 file pulled, 0 skipped. 32.9 MB/s (Done)')
+                    self.output.emit('xtest-agent安装完成，正在为您启动服务~')
+                    time.sleep(0.5)
+                    cmd = f'adb -s {device} shell chmod 755 /data/local/tmp/xtest-agent'
+                    subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                    time.sleep(0.5)
+                    cmd = f'adb -s {device} shell /data/local/tmp/xtest-agent server --stop'
+                    subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                    time.sleep(0.5)
+                    cmd = f'adb -s {device} shell /data/local/tmp/xtest-agent server -d "$@"'
+                    subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                    self.output.emit(f'已经为设备<b>[{device}]</b>启动Xtest')
