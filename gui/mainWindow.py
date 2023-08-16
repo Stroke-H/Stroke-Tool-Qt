@@ -24,6 +24,7 @@ import subprocess
 import platform
 import os
 import sys
+
 import requests
 
 
@@ -424,7 +425,7 @@ class MainWindow(QMainWindow):
                         my_path = str(AndroidFunc.get_desktop())
                         system_path = my_path.replace('Desktop', '')
                         os.chdir(system_path)
-                        self.status.showMessage(f'<b>[{self.devices_index}]</b>正在转化aab->apk,请稍等……', 3000)
+                        self.status.showMessage(f'[{self.devices_index}]正在转化aab->apk,请稍等……', 3000)
                         model = platform.node()
                         if model != 'DESKTOP-FHQH1MA':
                             key = fr'java -jar {my_path}\bundletool.jar build-apks --connected-device --bundle="{path[0]}" --output=b.apks*-*{self.devices_index}'

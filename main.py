@@ -18,33 +18,44 @@ from PyQt5.QtCore import Qt, QTimer
 
 def show_splash_screen():
     app = QApplication([])
-    splash_image_path = os.path.join(os.path.dirname(__file__), '1.png')
-    splash_pixmap = QPixmap(splash_image_path).scaled(913, 540)
-    splash_screen = QSplashScreen(splash_pixmap, Qt.WindowStaysOnTopHint)
-    splash_screen.show()
 
-    # 模拟应用程序加载的过程
-    progress_label = QLabel(f"{AndroidFunc.get_day_soup()}", alignment=Qt.AlignTop | Qt.AlignRight)
-    font = progress_label.font()
-    font.setPointSize(16)  # 设置字体大小
-    font.setBold(True)  # 设置字体加粗
-    progress_label.setFont(font)
-    progress_label.setStyleSheet("color: white;")
+    # Replace 'newsplash.gif' with the path to your video or GIF file
+    splash_file_path = os.path.join(os.path.dirname(__file__), 'newsplash.gif')
+    movie = QMovie(splash_file_path)
+
+    # Optionally, you can add some label or progress text
+    # progress_label = QLabel(f"{AndroidFunc.get_day_soup()}", alignment=Qt.AlignTop | Qt.AlignRight)
+    # font = progress_label.font()
+    # font.setPointSize(16)
+    # font.setBold(True)
+    # progress_label.setFont(font)
+    # progress_label.setStyleSheet("color: white;")
+
+    splash_label = QLabel(alignment=Qt.AlignCenter)
+    splash_label.setMovie(movie)
+    movie.start()
+
     layout = QVBoxLayout()
-    layout.addWidget(progress_label)
-    splash_screen.setLayout(layout)
+    # layout.addWidget(progress_label)
+    layout.addWidget(splash_label)
 
-    # 模拟应用程序加载的时间
+    splash_widget = QWidget()
+    splash_widget.setLayout(layout)
+
+    # Create a transparent window without window frame
+    splash_widget.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+    splash_widget.setAttribute(Qt.WA_TranslucentBackground)
+    # Simulate the application loading time
     timer = QTimer()
     timer.timeout.connect(app.quit)
-    timer.start(3000)  # 3秒后关闭启动画面
+    timer.start(5000)  # 5 seconds to close the splash screen
 
+    splash_widget.show()
     app.exec_()
 
 
 if __name__ == '__main__':
     show_splash_screen()
-    app = QApplication(sys.argv)  # 实例化窗口
-    bootstrap_window = MainWindow()  # 引导窗口展示
-    sys.exit(app.exec_())  # 遇到退出情况，终止程序
-    # 启动应用程序的主要逻辑
+    app = QApplication(sys.argv)  # Instantiate the application
+    bootstrap_window = MainWindow()  # Show the main window
+    sys.exit(app.exec_())  # Handle application exit
