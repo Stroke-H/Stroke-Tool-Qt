@@ -51,30 +51,6 @@ class AndroidFunc:
                     database='webeye_test_info'
                 )
                 return my_db
-            case 'bingo_sql':
-                my_db = pymysql.connect(
-                    host='106.75.36.211',
-                    user='gamehall',
-                    password='Sg,SAA+7B6?Q',
-                    database='bingo'
-                )
-                return my_db
-            case 'bubble_sql':
-                my_db = pymysql.connect(
-                    host='106.75.36.211',
-                    user='gamehall',
-                    password='Sg,SAA+7B6?Q',
-                    database='bubbleshooter'
-                )
-                return my_db
-            case 'domino_sql':
-                my_db = pymysql.connect(
-                    host='106.75.36.211',
-                    user='gamehall',
-                    password='Sg,SAA+7B6?Q',
-                    database='domino'
-                )
-                return my_db
             case _:
                 return False
 
