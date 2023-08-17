@@ -41,20 +41,6 @@ class AndroidFunc:
         return index_x, index_y
 
     @staticmethod
-    def sql_con(sql_name):
-        match sql_name:
-            case 'data_sql':
-                my_db = pymysql.connect(
-                    host='47.97.10.30',
-                    user='webeye_test_info',
-                    password='Just8023,./',
-                    database='webeye_test_info'
-                )
-                return my_db
-            case _:
-                return False
-
-    @staticmethod
     def get_day_soup() -> str:
         try:
             today = random.randint(1, 13)
