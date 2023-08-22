@@ -57,17 +57,31 @@ class AndroidFunc:
             return '生活独一无二，无需人云亦云'
 
     @staticmethod
+    def sql_con(sql_name):
+        match sql_name:
+            case 'data_sql':
+                my_db = pymysql.connect(
+                    host="47.97.10.30",
+                    user="webeye_test_info",
+                    password="Just8023,./",
+                    database="webeye_test_info"
+                )
+                return my_db
+            case _:
+                return 'connect error'
+
+    @staticmethod
     def get_id_and_package_name_list():
         try:
             my_db = AndroidFunc.sql_con(sql_name='data_sql')
             cursor = my_db.cursor()
             sql = f"""select app_id from android_game_info order by app_id ASC
-                                   """
+                                       """
             cursor.execute(sql)
             id_res = cursor.fetchall()
             id_arr = [i[0] for i in id_res]
             sql = f"""select package_name from android_game_info order by app_id ASC
-                                   """
+                                       """
             cursor.execute(sql)
             name_res = cursor.fetchall()
             name_arr = [i[0] for i in name_res]
@@ -85,12 +99,12 @@ class AndroidFunc:
             my_db = AndroidFunc.sql_con(sql_name='data_sql')
             cursor = my_db.cursor()
             sql = f"""select app_id from android_game_info where type='tool' order by app_id ASC
-                                   """
+                                       """
             cursor.execute(sql)
             id_res = cursor.fetchall()
             id_arr = [i[0] for i in id_res]
             sql = f"""select package_name from android_game_info where type='tool' order by app_id ASC
-                                   """
+                                       """
             cursor.execute(sql)
             name_res = cursor.fetchall()
             name_arr = [i[0] for i in name_res]
@@ -108,12 +122,12 @@ class AndroidFunc:
             my_db = AndroidFunc.sql_con(sql_name='data_sql')
             cursor = my_db.cursor()
             sql = f"""select app_id from android_game_info where type='game' order by app_id ASC
-                                   """
+                                       """
             cursor.execute(sql)
             id_res = cursor.fetchall()
             id_arr = [i[0] for i in id_res]
             sql = f"""select package_name from android_game_info where type='game' order by app_id ASC
-                                   """
+                                       """
             cursor.execute(sql)
             name_res = cursor.fetchall()
             name_arr = [i[0] for i in name_res]
@@ -141,7 +155,7 @@ class AndroidFunc:
         my_db = AndroidFunc.sql_con(sql_name)
         cursor = my_db.cursor()
         sql = f"""select {select_key} from {table_name} where {select_conditions} = "{conditions_key}"
-                                      """
+                                          """
         cursor.execute(sql)
         res = cursor.fetchone()
         return res[0]
@@ -253,7 +267,7 @@ class AndroidFunc:
             my_db = AndroidFunc.sql_con(sql_name='data_sql')
             cursor = my_db.cursor()
             sql = f"""select app_id from android_game_info where package_name = '{package_name}'
-                                    """
+                                        """
             cursor.execute(sql)
             pk_id = cursor.fetchone()
             cursor.close()
