@@ -19,17 +19,16 @@ from tidevice import Usbmux
 
 
 # noinspection PyAttributeOutsideInit
-class IosWindow(QDialog):
+class IosWindow(QWidget):
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.parent = parent
-        main_window_x = parent.pos().x()
-        main_window_y = parent.pos().y()
+    def __init__(self, parent_window):
+        super().__init__()
+        self.parent_window = parent_window
+        main_window_x = self.parent_window.pos().x()
+        main_window_y = self.parent_window.pos().y()
         self.setGeometry(int(main_window_x), int(main_window_y) - 180, 750, 70)  # 设置窗口大小
         self.setWindowTitle("IOS 功能辅助面板")
         self.setWindowOpacity(0.9)  # 设置窗口透明度
-        self.parent.open_window_list.append('IosWindow')
         self.msg_box = QMessageBox()
         self.id = 1
         self.notice = Notice()
@@ -75,7 +74,7 @@ class IosWindow(QDialog):
         self.hbox4.addWidget(self.get_package_name)
 
         self.setLayout(self.vbox)
-        self.show()
+        # self.show()
 
     def onclick_listen(self):
         self.install_ipa.clicked.connect(self.install_ipa_clicked)
@@ -157,6 +156,7 @@ class IosWindow(QDialog):
         if 'ConnectionType.USB' in str(Usbmux().device_list()).split(',')[2]:
             ios_udid = AndroidFunc.get_ios_udid()
             _path = AndroidFunc.screenshot(ios_udid, self.id)
+            print(_path)
             if 'Developer Mode is not opened' in _path:
                 self.logTextEdit.append(_path)
             else:
@@ -168,8 +168,11 @@ class IosWindow(QDialog):
     # 展示bundle id
     def show_package_name_clicked(self):
         if 'ConnectionType.USB' in str(Usbmux().device_list()).split(',')[2]:
-            ios_bundle_id = AndroidFunc.get_bundle_id()
-            self.data_entry.setText(ios_bundle_id)
+            try:
+                ios_bundle_id = AndroidFunc.get_bundle_id()
+                self.data_entry.setText(ios_bundle_id)
+            except BaseException as error:
+                print(error)
         else:
             self.logTextEdit.append('未链接手机~~')
 

@@ -317,8 +317,7 @@ class AndroidFunc:
     @staticmethod
     def install(res):
         try:
-            ipa_path = QFileDialog.getOpenFileName(None, '请选择APP的路径:', AndroidFunc.get_desktop())
-            print(ipa_path)
+            ipa_path = AndroidFunc.get_file_path()
             if 'ipa' in ipa_path[0]:
                 Device(res).app_install(ipa_path[0])
                 return True

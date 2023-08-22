@@ -25,7 +25,6 @@ class IosThread(QThread):
         cmd = self.cmd
         if 'IPA安装' in cmd:
             ios_udid = AndroidFunc.get_ios_udid()
-            print(ios_udid)
             res = str(AndroidFunc.install(ios_udid))
             if '未链接设备' in res:
                 self.output.emit(res)

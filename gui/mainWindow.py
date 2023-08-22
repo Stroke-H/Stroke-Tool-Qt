@@ -29,21 +29,22 @@ import requests
 
 
 # noinspection PyAttributeOutsideInit
-class MainWindow(QMainWindow):
-    def __init__(self):  # 初始化 继承父类QMainWindow
+class MainWindow(QWidget):
+    def __init__(self, parent_window):  # 初始化 继承父类QMainWindow
         super().__init__()
-        index_x, index_y = AndroidFunc.get_desktop_size()
-        self.setGeometry(int(index_x / 2) - 390, int(index_y / 2) - 175, 750, 375)  # 设置窗口大小
-        self.setMinimumSize(750, 375)
-        self.setWindowTitle("Stroke Tool 4.2.1")
-        url = 'https://img95.699pic.com/xsj/1r/9r/g0.jpg%21/fw/700/watermark/url/L3hzai93YXRlcl9kZXRhaWwyLnBuZw/align/southeast'
-        response = requests.get(url)
-        pixmap = QPixmap()
-        pixmap.loadFromData(response.content)
-        icon = QIcon(pixmap)
-        self.setWindowIcon(icon)
-        # self.setWindowIcon(QIcon(QPixmap(r'C:\Users\dell\PycharmProjects\pyqtProject\image\icon_new.ico')))
-        self.setWindowOpacity(0.9)  # 设置窗口透明度
+        # index_x, index_y = AndroidFunc.get_desktop_size()
+        # self.setGeometry(int(index_x / 2) - 390, int(index_y / 2) - 175, 750, 375)  # 设置窗口大小
+        # self.setMinimumSize(750, 375)
+        # self.setWindowTitle("Stroke Tool 4.2.1")
+        # url = 'https://img95.699pic.com/xsj/1r/9r/g0.jpg%21/fw/700/watermark/url/L3hzai93YXRlcl9kZXRhaWwyLnBuZw/align/southeast'
+        # response = requests.get(url)
+        # pixmap = QPixmap()
+        # pixmap.loadFromData(response.content)
+        # icon = QIcon(pixmap)
+        # self.setWindowIcon(icon)
+        # # self.setWindowIcon(QIcon(QPixmap(r'C:\Users\dell\PycharmProjects\pyqtProject\image\icon_new.ico')))
+        # self.setWindowOpacity(0.9)  # 设置窗口透明度
+        self.parent_window = parent_window
         self.notice = Notice()
         self.default_id = ''  # 用于接收下拉栏实时更新的id
         self.default_name = ''  # 用于接收下拉栏实时更新的package name
@@ -53,21 +54,20 @@ class MainWindow(QMainWindow):
         self.devices_index = ''
         self.net_status = 'disable'
         self.source_type = 'both'
-        self.status = self.statusBar()
-        self.menu_bar = self.menuBar()
+        self.status = self.parent_window.statusBar()
+        # self.menu_bar = self.menuBar()
         self.status.showMessage(f'{AndroidFunc.get_day_soup()} ———— 欢迎使用Stroke Tool,祝您使用愉快..', 10000)
         self.msg_box = QMessageBox()
         self.gui_init()
-        self.open_window_list = []
         self.con_status()
         self.onclick_listen()
         logger.info('工具已启动,监控日志正常获取中……')
 
     def gui_init(self):
-        self.my_window = QWidget()
-        self.setCentralWidget(self.my_window)
+        # self.my_window = QWidget()
+        # self.setCentralWidget(self.my_window)
         # 创建一个垂直布局
-        self.vbox = QVBoxLayout(self.centralWidget())
+        self.vbox = QVBoxLayout()
         # 创建多个水平布局
         self.hbox_1 = QHBoxLayout()
         self.hbox_2 = QHBoxLayout()
@@ -91,21 +91,21 @@ class MainWindow(QMainWindow):
         self.vbox.addLayout(self.hbox_10)
 
         # 菜单栏
-        file_menu = self.menu_bar.addMenu('Options')
-        backup_action = QAction('信息备份', self)
-        self.info_select_action = QAction('仅显示tool源', self)
-        account_action = QAction('显示提现账号', self)
-        backup_action.triggered.connect(self.backup_information_btn_clicked)
-        self.info_select_action.triggered.connect(self.info_select_clicked)
-        account_action.triggered.connect(self.show_account_btn_clicked)
-        file_menu.addAction(backup_action)
-        file_menu.addAction(self.info_select_action)
-        file_menu.addAction(account_action)
-
-        other_menu = self.menu_bar.addMenu('IOS Function')
-        ios_action = QAction('IOS功能界面', self)
-        ios_action.triggered.connect(self.ios_panel_btn_clicked)
-        other_menu.addAction(ios_action)
+        # file_menu = self.menu_bar.addMenu('Options')
+        # backup_action = QAction('信息备份', self)
+        # self.info_select_action = QAction('仅显示tool源', self)
+        # account_action = QAction('显示提现账号', self)
+        # backup_action.triggered.connect(self.backup_information_btn_clicked)
+        # self.info_select_action.triggered.connect(self.info_select_clicked)
+        # account_action.triggered.connect(self.show_account_btn_clicked)
+        # file_menu.addAction(backup_action)
+        # file_menu.addAction(self.info_select_action)
+        # file_menu.addAction(account_action)
+        #
+        # other_menu = self.menu_bar.addMenu('IOS Function')
+        # ios_action = QAction('IOS功能界面', self)
+        # ios_action.triggered.connect(self.ios_panel_btn_clicked)
+        # other_menu.addAction(ios_action)
 
         # android_com_func_menu = self.menu_bar.addMenu('Android常用功能')
         # show_date_panel = QAction('打开时间界面', self)
@@ -229,18 +229,18 @@ class MainWindow(QMainWindow):
         self.show_3_pkg_name_btn.setToolTip('log打印手机的<b>所有第三方packageName</b>')
         self.monkey_test_btn = QPushButton('启动Xtest', self)
         self.monkey_test_btn.setToolTip('启动手机上的<b>xtest的架构包</b>')
-        self.test_btn = QPushButton('预留BTN', self)
-        self.test_btn2 = QPushButton('预留BTN', self)
-        self.test_btn3 = QPushButton('预留BTN', self)
+        self.back_up_btn = QPushButton('信息备份', self)
+        self.info_select_btn = QPushButton('仅Tool源', self)
+        self.show_account_btn = QPushButton('提现账号', self)
         self.test_btn4 = QPushButton('预留BTN', self)
         self.hbox_6.addWidget(self.open_language_btn)
         self.hbox_6.addWidget(self.open_date_btn)
         self.hbox_6.addWidget(self.show_all_pkg_name_btn)
         self.hbox_6.addWidget(self.show_3_pkg_name_btn)
         self.hbox_6.addWidget(self.monkey_test_btn)
-        self.hbox_6.addWidget(self.test_btn)
-        self.hbox_6.addWidget(self.test_btn2)
-        self.hbox_6.addWidget(self.test_btn3)
+        self.hbox_6.addWidget(self.back_up_btn)
+        self.hbox_6.addWidget(self.info_select_btn)
+        self.hbox_6.addWidget(self.show_account_btn)
         self.hbox_6.addWidget(self.test_btn4)
 
         # 第七个水平布局的按钮
@@ -273,8 +273,9 @@ class MainWindow(QMainWindow):
         self.logTextEdit = QTextEdit()
         self.logTextEdit.setReadOnly(True)
         self.hbox_10.addWidget(self.logTextEdit)
+        self.setLayout(self.vbox)
 
-        self.show()
+        # self.show()
 
     def thread_start(self, key):
         self.install_adb = AdbThread(key)
@@ -310,6 +311,9 @@ class MainWindow(QMainWindow):
         self.show_all_pkg_name_btn.clicked.connect(self.all_pkg_btn_clicked)
         self.show_3_pkg_name_btn.clicked.connect(self.third_pkg_btn_clicked)
         self.monkey_test_btn.clicked.connect(self.start_xtest)
+        self.back_up_btn.clicked.connect(self.backup_information_btn_clicked)
+        self.info_select_btn.clicked.connect(self.info_select_clicked)
+        self.show_account_btn.clicked.connect(self.show_account_btn_clicked)
 
     def game_index_change(self):
         self.default_id = self.get_index_value(self.game_select_combo_box)
@@ -823,39 +827,18 @@ class MainWindow(QMainWindow):
             self.notice.error('您未选择文件或文件格式有误')
 
     def interact_btn_clicked(self):
-        if 'interact_window' in self.open_window_list:
-            self.status.showMessage('您已经打开了交互面板啦~请不要重复打开....', 5000)
-            return
-        else:
-            self.interact_window = InteractWindow(self)
-            self.interact_window.exec_()
-            self.open_window_list.remove('interact_window')
-            logger.info('打开了interact_window')
+        x = self.parent_window.pos().x()
+        y = self.parent_window.pos().y()
+        coordinate = [x, y]
+        self.interact_window = InteractWindow(self)
+        logger.info('打开了interact_window')
 
     def del_panel_btn_clicked(self):
-        if 'DelAccountWindow' in self.open_window_list:
-            self.status.showMessage('您已经打开了删除功能界面啦~请不要重复打开....', 5000)
-            return
-        else:
-            self.del_account_window = DelAccountWindow(self)
-            self.del_account_window.exec_()
-            self.open_window_list.remove('DelAccountWindow')
-            logger.info('打开了DelAccountWindow')
+        self.del_account_window = DelAccountWindow(self)
+        logger.info('打开了DelAccountWindow')
 
     def backup_information_btn_clicked(self):
-        if 'BackupInformationWindow' in self.open_window_list:
-            self.status.showMessage('您已经打开了备份功能界面啦~请不要重复打开....', 5000)
-            return
-        else:
-            self.backup_info_window = BackupInformationWindow(self)
-            self.backup_info_window.exec_()
-            self.open_window_list.remove('BackupInformationWindow')
-            logger.info('打开了BackupInformationWindow')
-
-    def authorize_window_btn_clicked(self):
-        self.authorize_window = AuthorizeWindow(self)
-        self.authorize_window.exec_()
-        # self.open_window_list.remove('AuthorizeWindow')
+        self.backup_info_window = BackupInformationWindow(self)
         logger.info('打开了BackupInformationWindow')
 
     def show_account_btn_clicked(self):
@@ -863,34 +846,20 @@ class MainWindow(QMainWindow):
         self.thread_start(key)
         self.notice.info("已经显示了各提现帐号啦~")
 
-    def ios_panel_btn_clicked(self):
-        if self.is_open:
-            AndroidFunc.get_file_path()
-            self.is_open = 0
-        if 'IosWindow' in self.open_window_list:
-            self.status.showMessage('您已经打开了IOS功能界面啦~请不要重复打开....', 5000)
-            print(self.open_window_list)
-            return
-        else:
-            self.ios_window = IosWindow(self)
-            self.ios_window.exec_()
-            self.open_window_list.remove('IosWindow')
-            logger.info('打开了IosWindow')
-
     def info_select_clicked(self):
         if self.source_type == 'both' or self.source_type == 'game':
             self.game_select_combo_box.disconnect()
             self.game_select_combo_box.clear()
             self.game_select_combo_box.addItems(AndroidFunc.get_tool_list())
             self.game_select_combo_box.currentIndexChanged.connect(self.game_index_change)
-            self.info_select_action.setText('仅显示game源')
+            self.info_select_btn.setText('仅game源')
             self.source_type = 'tool'
         elif self.source_type == 'tool':
             self.game_select_combo_box.disconnect()
             self.game_select_combo_box.clear()
             self.game_select_combo_box.addItems(AndroidFunc.get_game_list())
             self.game_select_combo_box.currentIndexChanged.connect(self.game_index_change)
-            self.info_select_action.setText('仅显示tool源')
+            self.info_select_btn.setText('仅tool源')
             self.source_type = 'game'
         logger.info('切换了信息源')
 

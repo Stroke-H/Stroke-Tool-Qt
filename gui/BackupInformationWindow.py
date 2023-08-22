@@ -12,17 +12,17 @@ from PyQt5.QtWidgets import QMessageBox
 
 
 # noinspection PyAttributeOutsideInit
-class BackupInformationWindow(QDialog):
+class BackupInformationWindow(QWidget):
 
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super().__init__()
         self.parent = parent
-        main_window_x = parent.pos().x()
-        main_window_y = parent.pos().y()
+        main_window_x = self.parent.parent_window.pos().x()
+        main_window_y = self.parent.parent_window.pos().y()
+        print(main_window_x, main_window_y)
         self.setGeometry(int(main_window_x) + 755, int(main_window_y) + 270, 400, 50)  # 设置窗口大小
         self.setWindowTitle("备份功能面板")
         self.setWindowOpacity(0.9)  # 设置窗口透明度
-        self.parent.open_window_list.append('BackupInformationWindow')
         self.msg_box = QMessageBox()
         self.notice = Notice()
         self.init_ui()

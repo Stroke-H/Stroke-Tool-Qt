@@ -16,17 +16,16 @@ from gui.mainWindow import *
 
 
 # noinspection PyAttributeOutsideInit
-class DelAccountWindow(QDialog):
+class DelAccountWindow(QWidget):
 
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super().__init__()
         self.parent = parent
-        main_window_x = parent.pos().x()
-        main_window_y = parent.pos().y()
+        main_window_x = self.parent.parent_window.pos().x()
+        main_window_y = self.parent.parent_window.pos().y()
         self.setGeometry(int(main_window_x) + 755, int(main_window_y) + 135, 400, 70)  # 设置窗口大小
         self.setWindowTitle("删号功能面板")
         self.setWindowOpacity(0.9)  # 设置窗口透明度
-        self.parent.open_window_list.append('DelAccountWindow')
         self.game_list = ['A902-com.yalla.bingocash', 'A871-com.yalla.bubbleshooter', 'A918-com.yalla.cashdomino']
         self.notice = Notice()
         self.init_ui()
