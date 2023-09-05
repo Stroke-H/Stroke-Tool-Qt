@@ -26,11 +26,14 @@ class IosThread(QThread):
         if 'IPA安装' in cmd:
             ios_udid = AndroidFunc.get_ios_udid()
             res = str(AndroidFunc.install(ios_udid))
+            print(res)
             if '未链接设备' in res:
                 self.output.emit(res)
             elif 'Local path  not exist' in res:
                 self.output.emit('您未选择IPA安装包,请选择安装包后重试')
             elif '不是ipa格式' in res:
                 self.output.emit(res)
+            elif 'ApplicationVerificationFailed' in res:
+                self.output.emit('IPA未签名或其他异常情况')
             else:
                 self.output.emit('安装成功')

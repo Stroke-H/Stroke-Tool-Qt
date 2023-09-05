@@ -124,7 +124,7 @@ class InitWindow(QMainWindow):
 
 
 if __name__ == '__main__':
-    show_splash_screen()
+    # show_splash_screen()
     app = QApplication(sys.argv)  # Instantiate the application
     bootstrap_window = InitWindow()  # Show the main window
     bootstrap_window.show()
