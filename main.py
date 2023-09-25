@@ -63,12 +63,15 @@ class InitWindow(QMainWindow):
         self.setGeometry(int(index_x / 2) - 390, int(index_y / 2) - 175, 750, 400)  # 设置窗口大小
         self.setMinimumSize(750, 400)
         self.setWindowTitle("Stroke Tool 4.2.1")
-        url = 'https://img95.699pic.com/xsj/1r/9r/g0.jpg%21/fw/700/watermark/url/L3hzai93YXRlcl9kZXRhaWwyLnBuZw/align/southeast'
-        response = requests.get(url)
-        pixmap = QPixmap()
-        pixmap.loadFromData(response.content)
-        icon = QIcon(pixmap)
-        self.setWindowIcon(icon)
+        try:
+            url = 'https://img95.699pic.com/xsj/1r/9r/g0.jpg%21/fw/700/watermark/url/L3hzai93YXRlcl9kZXRhaWwyLnBuZw/align/southeast'
+            response = requests.get(url)
+            pixmap = QPixmap()
+            pixmap.loadFromData(response.content)
+            icon = QIcon(pixmap)
+            self.setWindowIcon(icon)
+        except BaseException as error:
+            print(error)
         # self.setWindowIcon(QIcon(QPixmap(r'C:\Users\dell\PycharmProjects\pyqtProject\image\icon_new.ico')))
         self.setWindowOpacity(0.9)  # 设置窗口透明度
         self.menu_bar = self.menuBar()
@@ -124,8 +127,8 @@ class InitWindow(QMainWindow):
 
 
 if __name__ == '__main__':
-    # show_splash_screen()
-    app = QApplication(sys.argv)  # Instantiate the application
+    show_splash_screen()
+    app = QApplication(sys.argv)  # Instantiate the application object
     bootstrap_window = InitWindow()  # Show the main window
     bootstrap_window.show()
     sys.exit(app.exec_())  # Handle application exit

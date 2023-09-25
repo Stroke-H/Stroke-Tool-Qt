@@ -432,9 +432,9 @@ class MainWindow(QWidget):
                         self.status.showMessage(f'[{self.devices_index}]正在转化aab->apk,请稍等……', 3000)
                         model = platform.node()
                         if model != 'DESKTOP-FHQH1MA':
-                            key = fr'java -jar {my_path}\bundletool.jar build-apks --connected-device --bundle="{path[0]}" --output=b.apks*-*{self.devices_index}'
+                            key = fr'java -jar {my_path}\bundletool.jar build-apks --connected-device --bundle="{path[0]}" --output=b.apks --mode=universal >nul*-*{self.devices_index}'
                         else:
-                            key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --ks=C:\Users\dell\my-release-key.keystore --ks-pass=pass:102712 --ks-key-alias=hmh --key-pass=pass:102712*-*{self.devices_index}'
+                            key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\my-release-key.keystore --ks-pass=pass:102712 --ks-key-alias=hmh --key-pass=pass:102712*-*{self.devices_index}'
                         self.thread_start(key)
                         os.chdir(work_path)
                 else:
