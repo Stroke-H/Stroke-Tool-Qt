@@ -434,7 +434,7 @@ class MainWindow(QWidget):
                         if model != 'DESKTOP-FHQH1MA':
                             key = fr'java -jar {my_path}\bundletool.jar build-apks --connected-device --bundle="{path[0]}" --output=b.apks --mode=universal >nul*-*{self.devices_index}'
                         else:
-                            key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\my-release-key.keystore --ks-pass=pass:102712 --ks-key-alias=hmh --key-pass=pass:102712*-*{self.devices_index}'
+                            key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\bestnews.jks --ks-pass=pass:bestnews@123 --ks-key-alias=bestnews --key-pass=pass:bestnews@123*-*{self.devices_index}'
                         self.thread_start(key)
                         os.chdir(work_path)
                 else:
@@ -569,9 +569,14 @@ class MainWindow(QWidget):
                     except BaseException as err:
                         self.notice.warn('您当前安装的应用非本公司项目或命名不规范，正在为您安装，请稍等')
                         self.logTextEdit.append(f'<b>[{self.devices_index}]</b>将执行安装操作！')
-                    time.sleep(1)
-                    key = f'adb -s {self.devices_index} install "{path[0]}"'
-                    self.thread_start(key)
+                    finally:
+                        time.sleep(1)
+                        link_key = f'adb -s {self.devices_index} shell am start -a android.intent.action.VIEW -d "https://play.google.com/store/apps/' \
+                                   f'details?id={temp}&referrer=utm_source%3Dgoogle%26utm_medium%3Dcpc%26utm_term%3Drunning' \
+                                   f'%252Bshoes%26utm_content%3Dlogolink%26utm_campaign%3Dspring_sale"'
+                        AndroidFunc.subprocess_single(link_key)
+                        key = f'adb -s {self.devices_index} install "{path[0]}"'
+                        self.thread_start(key)
                 elif '.aab' in path[0]:
                     self.logTextEdit.append('正在进行aab安装并切换organic>>>>>>>')
                     link_key = f'adb -s {self.devices_index} shell am start -a android.intent.action.VIEW -d "https://play.google.com/store/apps/' \

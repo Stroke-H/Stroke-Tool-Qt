@@ -51,7 +51,7 @@ class IosWindow(QWidget):
         self.data_entry = QLineEdit(self)
         self.hbox1.addWidget(self.data_label)
         self.hbox1.addWidget(self.data_entry)
-
+ 
         # 第二个水平布局
         self.logTextEdit = QTextEdit()
         self.logTextEdit.setReadOnly(True)
