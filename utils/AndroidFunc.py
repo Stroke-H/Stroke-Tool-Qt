@@ -276,10 +276,8 @@ class AndroidFunc:
             logger.error(error)
         if pk_id:
             key = f"adb -s {devices} shell pm clear {package_name}"
-            print(key)
             result = AndroidFunc.subprocess_out(key).readline()
             res = str(result)
-            print(res)
             if 'Success' in res:
                 return 'success'
             else:
