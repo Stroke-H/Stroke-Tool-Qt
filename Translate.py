@@ -1,9 +1,12 @@
+import os
 import sys
 
 import requests
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import *
 from utils.AndroidFunc import AndroidFunc
+from utils.TranslateThread import TranslateThread
+from openpyxl import Workbook
 
 
 # noinspection PyAttributeOutsideInit
@@ -13,8 +16,12 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('Translate Window')
         self.setGeometry(100, 100, 1400, 300)
         self.setWindowOpacity(0.9)
-        self.country = ['en', 'zh-CN', 'zh-TW', 'ko', 'de', 'jp', 'ru', 'es', 'it', 'fr', 'vi', 'pt', 'fa']
+        self.country = ['en', 'zh-CN', 'zh-TW', 'ko', 'de', 'ja', 'ru', 'es', 'it', 'fr', 'vi', 'pt', 'fa']
+        self.all_data = []
         self.translate_info = []
+        self.status = self.statusBar()
+        # self.menu_bar = self.menuBar()
+        self.status.showMessage(f'{AndroidFunc.get_day_soup()} ———— 欢迎使用Stroke Tool,祝您使用愉快..', 10000)
         self.gui_init()
         self.on_clicked_listen()
 
@@ -37,10 +44,13 @@ class MainWindow(QMainWindow):
         self.need_translate_entry.setFixedSize(1200, 20)
         self.translate_btn = QPushButton('翻译', self)
         self.choose_btn = QPushButton('选择待翻译文件', self)
+        self.export_btn = QPushButton('导出Excel', self)
         self.hbox_1.addWidget(self.need_translate_entry)
         self.hbox_1.addWidget(self.choose_btn)
         self.hbox_1.addWidget(self.translate_btn)
-        #
+        self.hbox_1.addWidget(self.export_btn)
+
+        # table显示区
         self.table_log = QTableWidget()
         self.table_log.setColumnCount(len(self.country))
         self.table_log.setHorizontalHeaderLabels(
@@ -59,6 +69,7 @@ class MainWindow(QMainWindow):
     def on_clicked_listen(self):
         self.translate_btn.clicked.connect(self.do_translate)
         self.choose_btn.clicked.connect(self.get_config_file_path)
+        self.export_btn.clicked.connect(self.get_table_log_data)
 
     def get_key_data(self, path):
         with open(path, 'r', encoding='utf-8') as fp:
@@ -72,56 +83,57 @@ class MainWindow(QMainWindow):
         else:
             pass
 
-    def get_translate_result(self, translate_country, key_word):
-        """
-        :param translate_country: 翻译后的语言
-        :param key_word: 翻译的内容
-        :return: 结果
-      """
-
-        url = f'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto' \
-              f'&tl={translate_country}&dt=t&q={key_word}'
-        json_result = requests.get(
-            url=url)
-        data = json_result.json()
-        result = []
-        print(data[2], '-------------->', translate_country)
-        result.append(data[0][0][0])
-        return result
-
     def do_translate(self):
         country_list = self.country
         need_key = self.need_translate_entry.text()
-        if 'address=' in need_key:
-            key_list = self.get_key_data(need_key.split('dress=')[1])
-            for i in range(0, len(key_list)):
-                for k in range(0, len(country_list)):
-                    result = self.get_translate_result(country_list[k], key_list[i])
-                    self.translate_info.append(result[0])
-                row = self.table_log.rowCount()
-                self.table_log.insertRow(row)
-                for col in range(len(self.translate_info)):
-                    item = QTableWidgetItem(self.translate_info[col])
-                    item.setTextAlignment(Qt.AlignCenter)
-                    self.table_log.setItem(row, col, item)
-                self.table_log.setCurrentCell(row, 0)
-                self.table_log.scrollToBottom()
-                self.translate_info = []
-        elif need_key:
-            for i in range(0, len(country_list)):
-                result = self.get_translate_result(country_list[i], need_key)
-                self.translate_info.append(result[0])
-            row = self.table_log.rowCount()
-            self.table_log.insertRow(row)
-            for col in range(len(self.translate_info)):
-                item = QTableWidgetItem(self.translate_info[col])
-                item.setTextAlignment(Qt.AlignCenter)
-                self.table_log.setItem(row, col, item)
-            self.table_log.setCurrentCell(row, 0)
-            self.table_log.scrollToBottom()
-            self.translate_info = []
+        if need_key:
+            self.thread_start([self.country, need_key])
 
-        pass
+    def thread_start(self, key):
+        self.install_adb = TranslateThread(key)
+        self.install_adb.output.connect(self.on_output_received)
+        self.install_adb.status_output.connect(self.on_status_output_received)
+        self.install_adb.start()
+
+    def on_output_received(self, translate_key, output):
+        row = self.table_log.rowCount()
+        self.table_log.insertRow(row)
+        for col in range(len(output)):
+            item = QTableWidgetItem(output[col])
+            item.setTextAlignment(Qt.AlignCenter)
+            self.table_log.setItem(row, col, item)
+        self.table_log.setCurrentCell(row, 0)
+        self.table_log.scrollToBottom()
+        output.insert(0, translate_key)
+        self.all_data.append(output)
+
+    def on_status_output_received(self, translate_key, schedule):
+        if schedule + 1 < len(self.country):
+            self.status.showMessage(
+                f'当前正在翻译:_>{translate_key}<_,当前翻译进度为{schedule + 1}/{len(self.country)},请等待翻译结束后查看结果~',
+                1000)
+        else:
+            self.status.showMessage(f'当前_>{translate_key}<_已经翻译完成，请查看结果~', 10000)
+
+    def get_table_log_data(self):
+        print(self.all_data)
+        try:
+            os.remove(f'{AndroidFunc.get_desktop()}/Export_Translate.xlsx')
+        except BaseException as e:
+            print(e)
+        finally:
+            wb = Workbook()
+            # 激活第一个工作表
+            ws = wb.active
+            self.country.insert(0, 'need_translate_word')
+            for idx, value in enumerate(self.country, start=1):
+                ws.cell(row=1, column=idx, value=value)
+            for i in range(0, len(self.all_data)):
+                for idx, value in enumerate(self.all_data[i], start=1):
+                    ws.cell(row=i + 2, column=idx, value=value)
+            wb.save(f'{AndroidFunc.get_desktop()}/Export_Translate.xlsx')
+            del self.country[0]
+            self.status.showMessage('导出成功,已导出到桌面名为Export_Translate.xlsx,请到桌面查看~')
 
 
 if __name__ == '__main__':
