@@ -183,7 +183,6 @@ class AndroidFunc:
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         data = res.stdout.readline()
         logger.info(f'执行了cmd命令:{command}')
-        return data
 
     @staticmethod
     def check_file_exist(device_serial, directory, file_name):

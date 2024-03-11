@@ -107,7 +107,7 @@ class AdbThread(QThread):
         elif 'uninstall' in cmd:
             proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
-            self.output.emit('正在查找选中应用并卸载>>>>>请稍等......')
+            self.output.emit('正在查找选中应用并卸载>>>>>请稍等......')  
             line = proc.stdout.readline().decode().strip()
             if "Success" in line:
                 self.output.emit('卸载成功~~~')
@@ -219,14 +219,14 @@ class AdbThread(QThread):
             self.output.emit('未检测到待测试设备中安装了Xtest服务,即将开始下载Xtest-agent')
             self.output.emit('开始下载xtest-agent,请稍等~')
             time.sleep(1)
-            download_url = 'http://172.16.32.30:8000/download_file/xtest-agent'
+            download_url = 'http://47.97.10.30:80/download/xtest-agent'
             save_path = os.path.join(AndroidFunc.get_desktop(), 'xtest-agent')
 
             # curl 方式，速度快，方便，但是log少
             key = rf'curl -L -o "{save_path}" {download_url}'
             res = subprocess.Popen(key, shell=True, stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-            time.sleep(3)
+            time.sleep(4)
             self.output.emit('xtest-agent: 100%|██████████| 17.5M/17.5M [00:04<00:00, 3.45MB/s]')
             # request方法，速度稍慢，但是打印多
             # response = requests.get(download_url, stream=True)
@@ -263,6 +263,41 @@ class AdbThread(QThread):
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
                     time.sleep(0.5)
                     cmd = f'adb -s {device} shell /data/local/tmp/xtest-agent server -d "$@"'
-                    subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
+                    res = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
                     self.output.emit(f'已经为设备<b>[{device}]</b>启动Xtest')
+        elif 'start wifi connect adb' in cmd:
+            cmd = 'adb tcpip 9991'
+            subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE, universal_newlines=True)
+            self.output.emit('已默认为设备生成端口号为<b>9991</b>的adb服务')
+            time.sleep(2)
+            cmd = 'adb shell ifconfig'
+            data = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE, universal_newlines=True)
+            res = data.stdout.readlines()
+            time.sleep(2)
+            for data in res:
+                if 'Bcast' in data:
+                    try:
+                        result = str(data).strip().split('  Bcast:')[0].split('inet addr:')[1]
+                        data = subprocess.Popen(f'adb connect {result}:9991', shell=True, stdin=subprocess.PIPE,
+                                                stdout=subprocess.PIPE,
+                                                stderr=subprocess.PIPE, universal_newlines=True)
+                        self.output.emit(str(data.stdout.readline()))
+                        self.output.emit('已为您链接设备，请检查设备是否链接成功')
+                    except BaseException as error:
+                        self.output.emit(error)
+        elif 'adb connect' in cmd:
+            key = 'adb tcpip 9991'
+            subprocess.Popen(key, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE, universal_newlines=True)
+            self.output.emit('已默认为设备生成端口号为<b>9991</b>的adb服务')
+            time.sleep(2)
+            try:
+                data = subprocess.Popen(f'{cmd}:9991', shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE, universal_newlines=True)
+                self.output.emit(str(data.stdout.readline()))
+                self.output.emit('已为您链接设备，请检查设备是否链接成功')
+            except BaseException as error:
+                self.output.emit(error)

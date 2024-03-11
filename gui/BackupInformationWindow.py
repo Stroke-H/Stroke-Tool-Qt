@@ -19,7 +19,6 @@ class BackupInformationWindow(QWidget):
         self.parent = parent
         main_window_x = self.parent.parent_window.pos().x()
         main_window_y = self.parent.parent_window.pos().y()
-        print(main_window_x, main_window_y)
         self.setGeometry(int(main_window_x) + 755, int(main_window_y) + 270, 400, 50)  # 设置窗口大小
         self.setWindowTitle("备份功能面板")
         self.setWindowOpacity(0.9)  # 设置窗口透明度

@@ -17,6 +17,7 @@ from gui.dialog import *
 from gui.InteractWindow import InteractWindow
 from gui.DelAccountWindow import DelAccountWindow
 from gui.BackupInformationWindow import BackupInformationWindow
+from gui.ANR_check import FileDropWidget
 from gui.AuthorizeWindow import AuthorizeWindow
 from gui.IosWindow import IosWindow
 from utils.AdbThread import AdbThread
@@ -51,6 +52,8 @@ class MainWindow(QWidget):
         self.log_count = 0
         self.img_id = 1
         self.is_open = 1
+        self.secret_key = 0
+        self.secret_info = ''
         self.devices_index = ''
         self.net_status = 'disable'
         self.source_type = 'both'
@@ -231,8 +234,8 @@ class MainWindow(QWidget):
         self.monkey_test_btn.setToolTip('启动手机上的<b>xtest的架构包</b>')
         self.back_up_btn = QPushButton('信息备份', self)
         self.info_select_btn = QPushButton('仅Tool源', self)
-        self.show_account_btn = QPushButton('提现账号', self)
-        self.test_btn4 = QPushButton('预留BTN', self)
+        self.anr_check_btn = QPushButton('ANR面板', self)
+        self.wifi_con_btn = QPushButton('adb_Wifi', self)
         self.hbox_6.addWidget(self.open_language_btn)
         self.hbox_6.addWidget(self.open_date_btn)
         self.hbox_6.addWidget(self.show_all_pkg_name_btn)
@@ -240,8 +243,8 @@ class MainWindow(QWidget):
         self.hbox_6.addWidget(self.monkey_test_btn)
         self.hbox_6.addWidget(self.back_up_btn)
         self.hbox_6.addWidget(self.info_select_btn)
-        self.hbox_6.addWidget(self.show_account_btn)
-        self.hbox_6.addWidget(self.test_btn4)
+        self.hbox_6.addWidget(self.anr_check_btn)
+        self.hbox_6.addWidget(self.wifi_con_btn)
 
         # 第七个水平布局的按钮
         self.left_line_label_3 = QLabel('===========================================', self)
@@ -313,7 +316,8 @@ class MainWindow(QWidget):
         self.monkey_test_btn.clicked.connect(self.start_xtest)
         self.back_up_btn.clicked.connect(self.backup_information_btn_clicked)
         self.info_select_btn.clicked.connect(self.info_select_clicked)
-        self.show_account_btn.clicked.connect(self.show_account_btn_clicked)
+        self.anr_check_btn.clicked.connect(self.anr_check_btn_clicked)
+        self.wifi_con_btn.clicked.connect(self.wifi_con_btn_clicked)
 
     def game_index_change(self):
         self.default_id = self.get_index_value(self.game_select_combo_box)
@@ -434,8 +438,18 @@ class MainWindow(QWidget):
                         if model != 'DESKTOP-FHQH1MA':
                             key = fr'java -jar {my_path}\bundletool.jar build-apks --connected-device --bundle="{path[0]}" --output=b.apks --mode=universal >nul*-*{self.devices_index}'
                         else:
-                            key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\bestnews.jks --ks-pass=pass:bestnews@123 --ks-key-alias=bestnews --key-pass=pass:bestnews@123*-*{self.devices_index}'
-                        self.thread_start(key)
+                            match self.secret_key:
+                                case 0:
+                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\bestnews.jks --ks-pass=pass:bestnews@123 --ks-key-alias=bestnews --key-pass=pass:bestnews@123*-*{self.devices_index}'
+                                case 1:
+                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\eromance.jks --ks-pass=pass:Email123eromance --ks-key-alias=eromance --key-pass=pass:Email123eromance*-*{self.devices_index}'
+                                case 2:
+                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\novel.jks --ks-pass=pass:yelei123 --ks-key-alias=com.novel.romance.free --key-pass=pass:yelei123*-*{self.devices_index}'
+                                case 3:
+                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\dramaoverseas.jks --ks-pass=pass:dramaoverseas123 --ks-key-alias=dramaoverseas --key-pass=pass:dramaoverseas123*-*{self.devices_index}'
+                                case 4:
+                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\shortswave.jks --ks-pass=pass:Email321 --ks-key-alias=shortswave --key-pass=pass:Email321*-*{self.devices_index}'
+                        self.thread_start(self.secret_info)
                         os.chdir(work_path)
                 else:
                     self.notice.warn("您选择的文件不是aab或apk哦~")
@@ -526,11 +540,11 @@ class MainWindow(QWidget):
                     self.notice.success('已经清除了指定的应用缓存啦^0^~~')
                     self.logTextEdit.append(f'<b>[{self.devices_index}]</b>设备缓存清除成功')
                 case 'failed':
-                    self.notice.warn('指定的应用没有安装在本设备中，清确认后重试-,-~~')
+                    self.notice.warn('指定的应用没有安装在本设备中，请确认后重试-,-~~')
                 case 'no running app':
                     self.notice.error('您未指定应用哦0.0~~')
                 case 'current success':
-                    self.notice.success('由于您未指定应用，已为您清楚了当前运行的应用缓存=,=')
+                    self.notice.success('由于您未指定应用，已为您清除了当前运行的应用缓存=,=')
         else:
             self.notice.error('adb未链接，请检查设备T_T~')
 
@@ -588,7 +602,7 @@ class MainWindow(QWidget):
                         my_db = AndroidFunc.sql_con(sql_name='data_sql')
                         cursor = my_db.cursor()
                         sql = f"""select package_name from android_game_info where app_id = '{game_code}'
-                                                                                                                        """
+                                                                                                        """
                         cursor.execute(sql)
                         game_id = cursor.fetchone()[0]
                         cursor.close()
@@ -607,7 +621,9 @@ class MainWindow(QWidget):
                         if model != 'DESKTOP-FHQH1MA':
                             key = fr'java -jar {my_path}\bundletool.jar build-apks --connected-device --bundle="{path[0]}" --output=b.apks*-*{self.devices_index}'
                         else:
-                            key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --ks=C:\Users\dell\my-release-key.keystore --ks-pass=pass:102712 --ks-key-alias=hmh --key-pass=pass:102712*-*{self.devices_index}'
+                            # key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\dramaoverseas.jks --ks-pass=pass:dramaoverseas123 --ks-key-alias=dramaoverseas --key-pass=pass:dramaoverseas123*-*{self.devices_index}'
+                            key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\bestnews.jks --ks-pass=pass:bestnews@123 --ks-key-alias=bestnews --key-pass=pass:bestnews@123*-*{self.devices_index}'
+                            # key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\eromance.jks --ks-pass=pass:Email123eromance --ks-key-alias=eromance --key-pass=pass:Email123eromance*-*{self.devices_index}'
                         self.thread_start(key)
                         os.chdir(work_path)
                 else:
@@ -846,10 +862,9 @@ class MainWindow(QWidget):
         self.backup_info_window = BackupInformationWindow(self)
         logger.info('打开了BackupInformationWindow')
 
-    def show_account_btn_clicked(self):
-        key = 'account'
-        self.thread_start(key)
-        self.notice.info("已经显示了各提现帐号啦~")
+    def anr_check_btn_clicked(self):
+        self.anr_window = FileDropWidget(self)
+        logger.info('打开了ANRWindow')
 
     def info_select_clicked(self):
         if self.source_type == 'both' or self.source_type == 'game':
@@ -872,6 +887,20 @@ class MainWindow(QWidget):
         key = f'adb -s {self.devices_index} shell dumpsys window | findstr mCurrentFocus'
         self.thread_start(key)
         self.notice.info("已经显示packageName和对应的activity啦~")
+        data = int(self.package_name_entry.text())
+        if data in [0, 1, 2, 3, 4]:
+            self.secret_key = data
+            match data:
+                case 0:
+                    self.logTextEdit.append('当前使用证书为：<b>Localnews</b>')
+                case 1:
+                    self.logTextEdit.append('当前使用证书为：<b>Eromance</b>')
+                case 2:
+                    self.logTextEdit.append('当前使用证书为：<b>Novel</b>')
+                case 3:
+                    self.logTextEdit.append('当前使用证书为：<b>DramaOverSeas</b>')
+                case 4:
+                    self.logTextEdit.append('当前使用证书为：<b>ShortsWave</b>')
 
     def third_pkg_btn_clicked(self):
         key = f'adb -s {self.devices_index} shell pm list packages -3'
@@ -882,3 +911,19 @@ class MainWindow(QWidget):
         key = f'adb -s {self.devices_index} shell pm list packages'
         self.thread_start(key)
         self.notice.info("已经显示所有包名啦~")
+
+    def wifi_con_btn_clicked(self):
+        ip_data = self.package_name_entry.text()
+        if AndroidFunc.get_devices_list():
+            key = 'start wifi connect adb'
+            self.thread_start(key)
+            self.notice.info('正在通过WiFi启用adb，请稍等~')
+            logger.info('通过USB方式链接了WiFi-ADB服务')
+        elif ip_data:
+            key = f'adb connect {ip_data}'
+            self.thread_start(key)
+            self.notice.info('正在通过WiFi连接adb，请稍等~')
+            logger.info('通过填入IP方式链接了WiFi-ADB服务')
+        else:
+            self.notice.warn('您未输入ip地址或者手机未链接USB哦~')
+            self.logTextEdit.append('您未输入ip地址或者手机未链接USB哦')
