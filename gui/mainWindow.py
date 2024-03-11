@@ -18,7 +18,6 @@ from gui.InteractWindow import InteractWindow
 from gui.DelAccountWindow import DelAccountWindow
 from gui.BackupInformationWindow import BackupInformationWindow
 from gui.ANR_check import FileDropWidget
-from gui.AuthorizeWindow import AuthorizeWindow
 from gui.IosWindow import IosWindow
 from utils.AdbThread import AdbThread
 import subprocess
@@ -887,20 +886,24 @@ class MainWindow(QWidget):
         key = f'adb -s {self.devices_index} shell dumpsys window | findstr mCurrentFocus'
         self.thread_start(key)
         self.notice.info("已经显示packageName和对应的activity啦~")
-        data = int(self.package_name_entry.text())
-        if data in [0, 1, 2, 3, 4]:
-            self.secret_key = data
-            match data:
-                case 0:
-                    self.logTextEdit.append('当前使用证书为：<b>Localnews</b>')
-                case 1:
-                    self.logTextEdit.append('当前使用证书为：<b>Eromance</b>')
-                case 2:
-                    self.logTextEdit.append('当前使用证书为：<b>Novel</b>')
-                case 3:
-                    self.logTextEdit.append('当前使用证书为：<b>DramaOverSeas</b>')
-                case 4:
-                    self.logTextEdit.append('当前使用证书为：<b>ShortsWave</b>')
+        try:
+            data = int(self.package_name_entry.text())
+            if data in [0, 1, 2, 3, 4]:
+                self.secret_key = data
+                match data:
+                    case 0:
+                        self.logTextEdit.append('当前使用证书为：<b>Localnews</b>')
+                    case 1:
+                        self.logTextEdit.append('当前使用证书为：<b>Eromance</b>')
+                    case 2:
+                        self.logTextEdit.append('当前使用证书为：<b>Novel</b>')
+                    case 3:
+                        self.logTextEdit.append('当前使用证书为：<b>DramaOverSeas</b>')
+                    case 4:
+                        self.logTextEdit.append('当前使用证书为：<b>ShortsWave</b>')
+        except BaseException as error:
+            self.logTextEdit.append('error')
+
 
     def third_pkg_btn_clicked(self):
         key = f'adb -s {self.devices_index} shell pm list packages -3'
