@@ -42,7 +42,7 @@ class MainWindow(QWidget):
         # pixmap.loadFromData(response.content)
         # icon = QIcon(pixmap)
         # self.setWindowIcon(icon)
-        # # self.setWindowIcon(QIcon(QPixmap(r'C:\Users\dell\PycharmProjects\pyqtProject\image\icon_new.ico')))
+        # # self.setWindowIcon(QIcon(QPixmap(r'C:\Users\hmh70\PycharmProjects\pyqtProject\image\icon_new.ico')))
         # self.setWindowOpacity(0.9)  # 设置窗口透明度
         self.parent_window = parent_window
         self.notice = Notice()
@@ -51,7 +51,6 @@ class MainWindow(QWidget):
         self.log_count = 0
         self.img_id = 1
         self.is_open = 1
-        self.secret_key = 0
         self.secret_info = ''
         self.devices_index = ''
         self.net_status = 'disable'
@@ -433,21 +432,42 @@ class MainWindow(QWidget):
                         system_path = my_path.replace('Desktop', '')
                         os.chdir(system_path)
                         self.status.showMessage(f'[{self.devices_index}]正在转化aab->apk,请稍等……', 3000)
-                        model = platform.node()
-                        if model != 'DESKTOP-FHQH1MA':
-                            key = fr'java -jar {my_path}\bundletool.jar build-apks --connected-device --bundle="{path[0]}" --output=b.apks --mode=universal >nul*-*{self.devices_index}'
-                        else:
-                            match self.secret_key:
-                                case 0:
-                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\bestnews.jks --ks-pass=pass:bestnews@123 --ks-key-alias=bestnews --key-pass=pass:bestnews@123*-*{self.devices_index}'
-                                case 1:
-                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\eromance.jks --ks-pass=pass:Email123eromance --ks-key-alias=eromance --key-pass=pass:Email123eromance*-*{self.devices_index}'
-                                case 2:
-                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\novel.jks --ks-pass=pass:yelei123 --ks-key-alias=com.novel.romance.free --key-pass=pass:yelei123*-*{self.devices_index}'
-                                case 3:
-                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\dramaoverseas.jks --ks-pass=pass:dramaoverseas123 --ks-key-alias=dramaoverseas --key-pass=pass:dramaoverseas123*-*{self.devices_index}'
-                                case 4:
-                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\shortswave.jks --ks-pass=pass:Email321 --ks-key-alias=shortswave --key-pass=pass:Email321*-*{self.devices_index}'
+                        try:
+                            secret_key = self.package_name_entry.text()
+                            match secret_key:
+                                case 'com.news.local.best.us':
+                                    self.logTextEdit.append('检测到当前安装的应用为：<b>Localnews</b>，为您使用bestnews.jks证书')
+                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\bestnews.jks --ks-pass=pass:bestnews@123 --ks-key-alias=bestnews --key-pass=pass:bestnews@123*-*{self.devices_index}'
+                                case 'eromance':
+                                    self.logTextEdit.append('检测到当前安装的应用为：<b>Eromance</b>，为您使用eromance.jks证书')
+                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\eromance.jks --ks-pass=pass:Email123eromance --ks-key-alias=eromance --key-pass=pass:Email123eromance*-*{self.devices_index}'
+                                case 'novel':
+                                    self.logTextEdit.append('检测到当前安装的应用为：<b>Novel</b>，为您使用novel.jks证书')
+                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\novel.jks --ks-pass=pass:yelei123 --ks-key-alias=com.novel.romance.free --key-pass=pass:yelei123*-*{self.devices_index}'
+                                case 'com.drama.owner.best':
+                                    self.logTextEdit.append('检测到当前安装的应用为：<b>DramaOverSeas</b>，为您使用dramaoverseas.jks证书')
+                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\dramaoverseas.jks --ks-pass=pass:dramaoverseas123 --ks-key-alias=dramaoverseas --key-pass=pass:dramaoverseas123*-*{self.devices_index}'
+                                case 'com.shorts.wave.drama':
+                                    self.logTextEdit.append('检测到当前安装的应用为：<b>ShortsWave</b>，为您使用shortswave.jks证书')
+                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\shortswave.jks --ks-pass=pass:Email321 --ks-key-alias=shortswave --key-pass=pass:Email321*-*{self.devices_index}'
+                                case 'com.shorts.opentv.drama':
+                                    self.logTextEdit.append('检测到当前安装的应用为：<b>OpenTV</b>，为您使用opentv.jks证书')
+                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\opentv.jks --ks-pass=pass:opentv --ks-key-alias=opentv --key-pass=pass:opentv*-*{self.devices_index}'
+                                case 'com.drama.happy.look':
+                                    self.logTextEdit.append('检测到当前安装的应用为：<b>MeloShort</b>，为您使用MeloShort.jks证书')
+                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\dramahappy.jks --ks-pass=pass:dramahappy123 --ks-key-alias=dramahappy --key-pass=pass:dramahappy123*-*{self.devices_index}'
+                                case 'com.story.free.fun.readbest':
+                                    self.logTextEdit.append('检测到当前安装的应用为：<b>Ficdom</b>，为您使用funreadkey.jks证书')
+                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\funreadkey.jks --ks-pass=pass:fun@Email123 --ks-key-alias=fun --key-pass=pass:fun@Email123*-*{self.devices_index}'
+                                case 'com.story.free.fun.readbest':
+                                    self.logTextEdit.append('检测到当前安装的应用为：<b>Estory</b>，为您使用estory.jks证书')
+                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\estory.jks --ks-pass=pass:Email123estory --ks-key-alias=estory --key-pass=pass:Email123estory*-*{self.devices_index}'
+                                case 'com.enjoy.fancynovel.better':
+                                    self.logTextEdit.append('检测到当前安装的应用为：<b>FancyNovel</b>，为您使用fancyNovel.jks证书')
+                                    self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\fancynovel.jks --ks-pass=pass:Fan123ye --ks-key-alias=fancyn --key-pass=pass:Fan123ye*-*{self.devices_index}'
+                        except BaseException as error:
+                            self.logTextEdit.append('检测到当前安装的应用未备份证书，为您使用默认opentv.jks证书')
+                            self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\opentv.jks --ks-pass=pass:opentv --ks-key-alias=opentv --key-pass=pass:opentv*-*{self.devices_index}'
                         self.thread_start(self.secret_info)
                         os.chdir(work_path)
                 else:
@@ -620,9 +640,9 @@ class MainWindow(QWidget):
                         if model != 'DESKTOP-FHQH1MA':
                             key = fr'java -jar {my_path}\bundletool.jar build-apks --connected-device --bundle="{path[0]}" --output=b.apks*-*{self.devices_index}'
                         else:
-                            # key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\dramaoverseas.jks --ks-pass=pass:dramaoverseas123 --ks-key-alias=dramaoverseas --key-pass=pass:dramaoverseas123*-*{self.devices_index}'
-                            key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\bestnews.jks --ks-pass=pass:bestnews@123 --ks-key-alias=bestnews --key-pass=pass:bestnews@123*-*{self.devices_index}'
-                            # key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\dell\eromance.jks --ks-pass=pass:Email123eromance --ks-key-alias=eromance --key-pass=pass:Email123eromance*-*{self.devices_index}'
+                            # key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\dramaoverseas.jks --ks-pass=pass:dramaoverseas123 --ks-key-alias=dramaoverseas --key-pass=pass:dramaoverseas123*-*{self.devices_index}'
+                            key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\bestnews.jks --ks-pass=pass:bestnews@123 --ks-key-alias=bestnews --key-pass=pass:bestnews@123*-*{self.devices_index}'
+                            # key = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\eromance.jks --ks-pass=pass:Email123eromance --ks-key-alias=eromance --key-pass=pass:Email123eromance*-*{self.devices_index}'
                         self.thread_start(key)
                         os.chdir(work_path)
                 else:
@@ -886,24 +906,6 @@ class MainWindow(QWidget):
         key = f'adb -s {self.devices_index} shell dumpsys window | findstr mCurrentFocus'
         self.thread_start(key)
         self.notice.info("已经显示packageName和对应的activity啦~")
-        try:
-            data = int(self.package_name_entry.text())
-            if data in [0, 1, 2, 3, 4]:
-                self.secret_key = data
-                match data:
-                    case 0:
-                        self.logTextEdit.append('当前使用证书为：<b>Localnews</b>')
-                    case 1:
-                        self.logTextEdit.append('当前使用证书为：<b>Eromance</b>')
-                    case 2:
-                        self.logTextEdit.append('当前使用证书为：<b>Novel</b>')
-                    case 3:
-                        self.logTextEdit.append('当前使用证书为：<b>DramaOverSeas</b>')
-                    case 4:
-                        self.logTextEdit.append('当前使用证书为：<b>ShortsWave</b>')
-        except BaseException as error:
-            self.logTextEdit.append('error')
-
 
     def third_pkg_btn_clicked(self):
         key = f'adb -s {self.devices_index} shell pm list packages -3'

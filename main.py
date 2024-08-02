@@ -72,6 +72,7 @@ class InitWindow(QMainWindow):
             self.setWindowIcon(icon)
         except BaseException as error:
             print(error)
+        # self.setStyleSheet("background-image: url(background_1.jpg);")
         # self.setWindowIcon(QIcon(QPixmap(r'C:\Users\dell\PycharmProjects\pyqtProject\image\icon_new.ico')))
         self.setWindowOpacity(0.9)  # 设置窗口透明度
         self.menu_bar = self.menuBar()
@@ -127,7 +128,7 @@ class InitWindow(QMainWindow):
 
 
 if __name__ == '__main__':
-    show_splash_screen()
+    # show_splash_screen()
     app = QApplication(sys.argv)  # Instantiate the application object
     bootstrap_window = InitWindow()  # Show the main window
     bootstrap_window.show()

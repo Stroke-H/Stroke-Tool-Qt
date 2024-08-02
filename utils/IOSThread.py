@@ -10,7 +10,6 @@
 from gui.mainWindow import *
 import os
 import time
-import webbrowser
 
 
 class IosThread(QThread):

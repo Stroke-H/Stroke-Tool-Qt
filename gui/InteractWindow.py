@@ -6,9 +6,10 @@
 @Time    :   2023/3/20 1:34 PM
 @Desc    :   交互功能界面
 """
+import time
 
 from gui.mainWindow import *
-
+import requests
 
 # from PyQt5.QtGui import *
 
@@ -43,8 +44,9 @@ class InteractWindow(QWidget):
         # # validator.setRegExp(reg)
         # # self.package_name_entry.setValidator(validator)
         self.open_link_btn = QPushButton('打开网页', self)
-        self.send_data_btn = QPushButton('发送内容', self)
+        self.send_data_btn = QPushButton('发送内容（clipper）', self)
         self.get_data_btn = QPushButton('获取内容', self)
+        self.send_data_btn_2 = QPushButton('发送内容（网络）', self)
 
         # 将标签添加到布局中
         self.hbox1.addWidget(self.data_label)
@@ -52,6 +54,7 @@ class InteractWindow(QWidget):
         self.hbox2.addWidget(self.open_link_btn)
         self.hbox2.addWidget(self.send_data_btn)
         self.hbox2.addWidget(self.get_data_btn)
+        self.hbox2.addWidget(self.send_data_btn_2)
 
         self.setLayout(self.vbox)
 
@@ -63,6 +66,7 @@ class InteractWindow(QWidget):
         self.open_link_btn.clicked.connect(self.open_link_btn_clicked)
         self.send_data_btn.clicked.connect(self.send_data_btn_clicked)
         self.get_data_btn.clicked.connect(self.get_data_btn_clicked)
+        self.send_data_btn_2.clicked.connect(self.send_data_btn_2_clicked)
 
     # 手机上打开链接
     def open_link_btn_clicked(self):
@@ -94,6 +98,7 @@ class InteractWindow(QWidget):
         res = AndroidFunc.subprocess_multiple(key1)
         time.sleep(1)
         data_res = res[1].decode('utf-8')
+        print(data_res)
         if len(data_res) > 1:
             my_data = data_res.split('data=')[1]
             self.data_entry.setText(my_data)
@@ -101,6 +106,15 @@ class InteractWindow(QWidget):
             self.notice.error('您的手机剪切板没有内容')
         time.sleep(1)
         key2 = f'adb -s {devices} shell am force-stop ca.zgrs.clipper'
+        AndroidFunc.subprocess_single(key2)
+
+    def send_data_btn_2_clicked(self):
+        devices = self.parent.devices_index
+        send_data = str(self.data_entry.text()).replace('&', '%26')
+        key = f'adb -s {devices} shell am start -n com.copy.clipper/.MainActivity --es text_to_copy "{send_data}"'
+        AndroidFunc.subprocess_single(key)
+        time.sleep(1)
+        key2 = f'adb -s {devices} shell am force-stop com.copy.clipper'
         AndroidFunc.subprocess_single(key2)
 
 
