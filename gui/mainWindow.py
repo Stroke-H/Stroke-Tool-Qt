@@ -20,10 +20,12 @@ from gui.BackupInformationWindow import BackupInformationWindow
 from gui.ANR_check import FileDropWidget
 from gui.IosWindow import IosWindow
 from utils.AdbThread import AdbThread
+# from utils.MonitorThread import MonitorThread
 import subprocess
 import platform
 import os
 import sys
+import wmi
 
 import requests
 
@@ -63,6 +65,7 @@ class MainWindow(QWidget):
         self.con_status()
         self.onclick_listen()
         logger.info('工具已启动,监控日志正常获取中……')
+        # self.monitor_start()
 
     def gui_init(self):
         # self.my_window = QWidget()
@@ -362,6 +365,10 @@ class MainWindow(QWidget):
     def on_output_received(self, output):
         self.logTextEdit.append(output)
 
+    def on_connect_info_received(self, output):
+        print('子进程有输出', output)
+        self.logTextEdit.append(output)
+
     def open_language_btn_clicked(self):
         key = f'adb -s {self.devices_index} shell am start -a android.settings.LOCALE_SETTINGS'
         AndroidFunc.subprocess_single(key)
@@ -436,34 +443,43 @@ class MainWindow(QWidget):
                             secret_key = self.package_name_entry.text()
                             match secret_key:
                                 case 'com.news.local.best.us':
-                                    self.logTextEdit.append('检测到当前安装的应用为：<b>Localnews</b>，为您使用bestnews.jks证书')
+                                    self.logTextEdit.append(
+                                        '检测到当前安装的应用为：<b>Localnews</b>，为您使用bestnews.jks证书')
                                     self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\bestnews.jks --ks-pass=pass:bestnews@123 --ks-key-alias=bestnews --key-pass=pass:bestnews@123*-*{self.devices_index}'
                                 case 'eromance':
-                                    self.logTextEdit.append('检测到当前安装的应用为：<b>Eromance</b>，为您使用eromance.jks证书')
+                                    self.logTextEdit.append(
+                                        '检测到当前安装的应用为：<b>Eromance</b>，为您使用eromance.jks证书')
                                     self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\eromance.jks --ks-pass=pass:Email123eromance --ks-key-alias=eromance --key-pass=pass:Email123eromance*-*{self.devices_index}'
                                 case 'novel':
                                     self.logTextEdit.append('检测到当前安装的应用为：<b>Novel</b>，为您使用novel.jks证书')
                                     self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\novel.jks --ks-pass=pass:yelei123 --ks-key-alias=com.novel.romance.free --key-pass=pass:yelei123*-*{self.devices_index}'
                                 case 'com.drama.owner.best':
-                                    self.logTextEdit.append('检测到当前安装的应用为：<b>DramaOverSeas</b>，为您使用dramaoverseas.jks证书')
+                                    self.logTextEdit.append(
+                                        '检测到当前安装的应用为：<b>DramaOverSeas</b>，为您使用dramaoverseas.jks证书')
                                     self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\dramaoverseas.jks --ks-pass=pass:dramaoverseas123 --ks-key-alias=dramaoverseas --key-pass=pass:dramaoverseas123*-*{self.devices_index}'
                                 case 'com.shorts.wave.drama':
-                                    self.logTextEdit.append('检测到当前安装的应用为：<b>ShortsWave</b>，为您使用shortswave.jks证书')
+                                    self.logTextEdit.append(
+                                        '检测到当前安装的应用为：<b>ShortsWave</b>，为您使用shortswave.jks证书')
                                     self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\shortswave.jks --ks-pass=pass:Email321 --ks-key-alias=shortswave --key-pass=pass:Email321*-*{self.devices_index}'
                                 case 'com.shorts.opentv.drama':
-                                    self.logTextEdit.append('检测到当前安装的应用为：<b>OpenTV</b>，为您使用opentv.jks证书')
+                                    self.logTextEdit.append(
+                                        '检测到当前安装的应用为：<b>OpenTV</b>，为您使用opentv.jks证书')
                                     self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\opentv.jks --ks-pass=pass:opentv --ks-key-alias=opentv --key-pass=pass:opentv*-*{self.devices_index}'
                                 case 'com.drama.happy.look':
-                                    self.logTextEdit.append('检测到当前安装的应用为：<b>MeloShort</b>，为您使用MeloShort.jks证书')
+                                    self.logTextEdit.append(
+                                        '检测到当前安装的应用为：<b>MeloShort</b>，为您使用MeloShort.jks证书')
                                     self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\dramahappy.jks --ks-pass=pass:dramahappy123 --ks-key-alias=dramahappy --key-pass=pass:dramahappy123*-*{self.devices_index}'
                                 case 'com.story.free.fun.readbest':
-                                    self.logTextEdit.append('检测到当前安装的应用为：<b>Ficdom</b>，为您使用funreadkey.jks证书')
+                                    self.logTextEdit.append(
+                                        '检测到当前安装的应用为：<b>Ficdom</b>，为您使用funreadkey.jks证书')
                                     self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\funreadkey.jks --ks-pass=pass:fun@Email123 --ks-key-alias=fun --key-pass=pass:fun@Email123*-*{self.devices_index}'
                                 case 'com.story.free.fun.readbest':
-                                    self.logTextEdit.append('检测到当前安装的应用为：<b>Estory</b>，为您使用estory.jks证书')
+                                    self.logTextEdit.append(
+                                        '检测到当前安装的应用为：<b>Estory</b>，为您使用estory.jks证书')
                                     self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\estory.jks --ks-pass=pass:Email123estory --ks-key-alias=estory --key-pass=pass:Email123estory*-*{self.devices_index}'
                                 case 'com.enjoy.fancynovel.better':
-                                    self.logTextEdit.append('检测到当前安装的应用为：<b>FancyNovel</b>，为您使用fancyNovel.jks证书')
+                                    self.logTextEdit.append(
+                                        '检测到当前安装的应用为：<b>FancyNovel</b>，为您使用fancyNovel.jks证书')
                                     self.secret_info = fr'java -jar {my_path}\bundletool.jar build-apks --bundle="{path[0]}" --output=b.apks --mode=universal >nul --ks=C:\Users\hmh70\fancynovel.jks --ks-pass=pass:Fan123ye --ks-key-alias=fancyn --key-pass=pass:Fan123ye*-*{self.devices_index}'
                         except BaseException as error:
                             self.logTextEdit.append('检测到当前安装的应用未备份证书，为您使用默认opentv.jks证书')
@@ -932,3 +948,8 @@ class MainWindow(QWidget):
         else:
             self.notice.warn('您未输入ip地址或者手机未链接USB哦~')
             self.logTextEdit.append('您未输入ip地址或者手机未链接USB哦')
+
+    # def monitor_start(self):
+    #     self.monitor_adb = MonitorThread()
+    #     self.monitor_adb.output.connect(self.on_connect_info_received)
+    #     self.monitor_adb.start()

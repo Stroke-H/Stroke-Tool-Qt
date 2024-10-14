@@ -106,7 +106,7 @@ class InitWindow(QMainWindow):
         self.android_window = MainWindow(self.index_window)
         self.ios_window = IosWindow(self.index_window)
 
-        self.stacked_widget = QStackedWidget(self)
+        self.stacked_widget = QStackedWidget(self)   
 
         self.layout = QVBoxLayout(self.central_widget)
         self.layout.addWidget(self.stacked_widget)
@@ -116,7 +116,7 @@ class InitWindow(QMainWindow):
 
         self.setLayout(self.layout)
 
-    def android_panel_btn_clicked(self):
+    def android_panel_btn_clicked(self):    
         self.stacked_widget.setCurrentWidget(self.android_window)
         # self.file_menu.setEnabled(True)
 
