@@ -61,10 +61,10 @@ class AndroidFunc:
         match sql_name:
             case 'data_sql':
                 my_db = pymysql.connect(
-                    host="47.97.10.30",
-                    user="webeye_test_info",
-                    password="Just8023,./",
-                    database="webeye_test_info"
+                    host="",
+                    user="",
+                    password="",
+                    database=""
                 )
                 return my_db
             case _:
@@ -91,7 +91,8 @@ class AndroidFunc:
             return res_arr
         except BaseException as error:
             logger.error(error)
-            return ['未成功链接sql,请检查网络情况']
+            data = ['未成功链接sql,当前使用默认配置- ', 'A1096-com.drama.happy.look', 'A1100-com.shorts.wave.drama']
+            return data
 
     @staticmethod
     def get_tool_list():
