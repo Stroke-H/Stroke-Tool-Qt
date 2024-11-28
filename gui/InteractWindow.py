@@ -90,23 +90,27 @@ class InteractWindow(QWidget):
 
     # 获取手机剪切板信息
     def get_data_btn_clicked(self):
-        devices = self.parent.devices_index
-        key = f"adb -s {devices} shell am start -n ca.zgrs.clipper/ca.zgrs.clipper.Main"
-        AndroidFunc.subprocess_single(key)
-        time.sleep(1)
-        key1 = f'adb -s {devices} shell am broadcast -a clipper.get'
-        res = AndroidFunc.subprocess_multiple(key1)
-        time.sleep(1)
-        data_res = res[1].decode('utf-8')
-        print(data_res)
-        if len(data_res) > 1:
-            my_data = data_res.split('data=')[1]
-            self.data_entry.setText(my_data)
-        else:
-            self.notice.error('您的手机剪切板没有内容')
-        time.sleep(1)
-        key2 = f'adb -s {devices} shell am force-stop ca.zgrs.clipper'
-        AndroidFunc.subprocess_single(key2)
+        try:
+            devices = self.parent.devices_index
+            key = f"adb -s {devices} shell am start -n ca.zgrs.clipper/ca.zgrs.clipper.Main"
+            AndroidFunc.subprocess_single(key)
+            time.sleep(1)
+            key1 = f'adb -s {devices} shell am broadcast -a clipper.get'
+            res = AndroidFunc.subprocess_multiple(key1)
+            time.sleep(1)
+            data_res = res[1].decode('utf-8')
+            print(data_res)
+            if len(data_res) > 1:
+                my_data = data_res.split('data=')[1]
+                self.data_entry.setText(my_data)
+            else:
+                self.notice.error('您的手机剪切板没有内容')
+            time.sleep(1)
+            key2 = f'adb -s {devices} shell am force-stop ca.zgrs.clipper'
+            AndroidFunc.subprocess_single(key2)
+        except BaseException as error:
+            logger.info(error)
+            self.notice.error('您的adb连接状态异常，请检查后重试')
 
     def send_data_btn_2_clicked(self):
         devices = self.parent.devices_index
